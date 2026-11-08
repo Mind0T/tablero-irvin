@@ -33,7 +33,7 @@ const AMBITOS = {
     prefijo: 'ESC-',
     categorias: ['Algoritmos y Estructura de Datos', 'Programación para Ciencia de Datos',
                  'Introducción a la Ciencia de Datos', 'Ética y Legalidad'],
-    tipos: ['Tarea', 'Recordatorio', 'Examen', 'Nota']
+    tipos: ['Tarea', 'Práctica', 'Recordatorio', 'Examen', 'Nota']
   },
   Personal: {
     prefijo: 'PER-',

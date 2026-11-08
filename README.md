@@ -15,7 +15,7 @@ La URL de Apps Script, la clave y tu número **nunca están en este repo**.
 
 | Ámbito   | Categorías                                                                 | Tipos                                  | IDs       |
 |----------|----------------------------------------------------------------------------|----------------------------------------|-----------|
-| Escuela  | Algoritmos y Estructura de Datos · Programación para Ciencia de Datos · Introducción a la Ciencia de Datos · Ética y Legalidad | Tarea · Recordatorio · Examen · Nota | `ESC-001` |
+| Escuela  | Algoritmos y Estructura de Datos · Programación para Ciencia de Datos · Introducción a la Ciencia de Datos · Ética y Legalidad | Tarea · Práctica · Recordatorio · Examen · Nota | `ESC-001` |
 | Personal | IMSS · Jandy · Familia · Pagos                                             | Recordatorio · Evento · Cita · Encargo | `PER-001` |
 
 Cada asignación lleva **ámbito + categoría + tipo + prioridad** (Urgente / Importante / Normal), fecha y hora opcional.

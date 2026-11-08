@@ -521,7 +521,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   // Respaldo por si la hoja aún no manda las categorías (se reemplaza con lo que mande Apps Script).
   var AMBITOS_DEFAULT = {
     Escuela: { prefijo: "ESC-", categorias: ["Algoritmos y Estructura de Datos", "Programación para Ciencia de Datos", "Introducción a la Ciencia de Datos", "Ética y Legalidad"],
-               tipos: ["Tarea", "Recordatorio", "Examen", "Nota"] },
+               tipos: ["Tarea", "Práctica", "Recordatorio", "Examen", "Nota"] },
     Personal: { prefijo: "PER-", categorias: ["IMSS", "Jandy", "Familia", "Pagos"], tipos: ["Recordatorio", "Evento", "Cita", "Encargo"] }
   };
   var CAT_LABEL = { Escuela: "Materia", Personal: "Categoría" };
@@ -953,7 +953,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +h[1] + TZ_OFFSET_H, +h[2] + (plusMin || 0)));
     return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + "00Z";
   }
-  var CAL_PREFIX = { Tarea: "Entrega", Examen: "Examen", Recordatorio: "Recordatorio", Nota: "Nota", Evento: "Evento", Cita: "Cita", Encargo: "Encargo" };
+  var CAL_PREFIX = { Tarea: "Entrega", "Práctica": "Entrega de práctica", Examen: "Examen", Recordatorio: "Recordatorio", Nota: "Nota", Evento: "Evento", Cita: "Cita", Encargo: "Encargo" };
   function calInfo(t) {
     var d = parseYMD(t.fecha); if (!d) return null;
     var timed = /^\d{1,2}:\d{2}$/.test(t.hora || "");
