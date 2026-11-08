@@ -25,9 +25,9 @@ Las listas se cambian en `apps-script/Code.gs` (constante `AMBITOS`) y el tabler
 
 ## 1 · Google Sheet + Apps Script
 
-1. Crea un Google Sheet nuevo → **Extensiones → Apps Script**.
+1. Abre el Google Sheet **«Tablero personal · Irvin»** (ya tiene las pestañas *Tareas*, *Equipo* y *Recursos* con encabezados y menús) → **Extensiones → Apps Script**.
 2. Reemplaza `Código.gs` con `apps-script/Code.gs`.
-3. Ejecuta **`crearHoja`** (▶) y autoriza → crea las pestañas *Tareas*, *Equipo* y *Recursos* con sus encabezados.
+3. (Solo si partes de un Sheet vacío) ejecuta **`crearHoja`** (▶) para crear las pestañas.
 4. Ejecuta **`generarSecreto`** → copia el `API_SECRET` del registro de ejecución.
 5. **⚙️ Configuración del proyecto → Propiedades de la secuencia de comandos → Agregar**:
    - `MI_WHATSAPP` = tu número a 10 dígitos (el botón «Mandármelo por WhatsApp» lo usa).
