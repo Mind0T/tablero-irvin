@@ -1,0 +1,11 @@
+{
+  "name": "tablero-irvin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tablero kanban personal de Irvin (escuela y vida), conectado a Google Sheets.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
