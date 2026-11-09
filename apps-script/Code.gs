@@ -23,24 +23,34 @@
 const SHEET_TAREAS = 'Tareas';
 const SHEET_EQUIPO = 'Equipo';
 const SHEET_RECURSOS = 'Recursos';
+const SHEET_HORARIO = 'Horario';
+const SHEET_PLAN = 'Plan';
+const SHEET_CAL_IPN = 'Calendario IPN';
 const TZ = 'America/Mexico_City';
 
 /* ================== CATEGORÍAS (edítalas aquí si cambian) ================== */
-// Cada ámbito tiene su lista de categorías (materias / áreas de tu vida) y su lista de tipos.
-// Una tarea siempre lleva: Ámbito + Categoría + Tipo (+ Prioridad).
+// Cada ámbito tiene su lista de categorías (materias / áreas de tu vida), su lista de tipos
+// y, en Escuela, la lista de escuelas / plataformas (cada asignación lleva hasta dos).
+// Una tarea siempre lleva: Ámbito + Categoría + Tipo (+ Urgencia).
 const AMBITOS = {
   Escuela: {
     prefijo: 'ESC-',
     categorias: ['Algoritmos y Estructura de Datos', 'Programación para Ciencia de Datos',
-                 'Introducción a la Ciencia de Datos', 'Ética y Legalidad'],
-    tipos: ['Tarea', 'Práctica', 'Recordatorio', 'Examen', 'Nota']
+                 'Introducción a la Ciencia de Datos', 'Ética y Legalidad',
+                 'Nube', 'Framework', 'UX/UI', 'Python', 'C', 'FrontEnd', 'BackEnd'],
+    tipos: ['Tarea', 'Práctica', 'Estudio', 'Curso', 'Workshop', 'Certificación',
+            'Recordatorio', 'Examen', 'Nota'],
+    instituciones: ['ESCOM', 'EBAC', 'Google', 'AWS', 'Oracle', 'FinOps', 'Udemy',
+                    'Domestika', 'Código Facilito', 'Platzi', 'DataCamp']
   },
   Personal: {
     prefijo: 'PER-',
     categorias: ['IMSS', 'Jandy', 'Familia', 'Pagos'],
-    tipos: ['Recordatorio', 'Evento', 'Cita', 'Encargo']
+    tipos: ['Recordatorio', 'Evento', 'Cita', 'Encargo'],
+    instituciones: []
   }
 };
+const MAX_INSTITUCIONES = 2;
 const AMBITO_NAMES = Object.keys(AMBITOS);
 
 // Las columnas de "Tareas" se ubican por el TEXTO del encabezado (fila 1), no por su posición.
@@ -57,6 +67,8 @@ const HEADERS = {
   prioridad: ['Prioridad'],
   fecha: ['Fecha', 'Fecha límite'],
   hora: ['Hora'],
+  inicio: ['Inicio', 'Desde'],
+  instituciones: ['Instituciones', 'Escuelas', 'Plataformas'],
   notas: ['Notas'],
   enlace: ['Entregable', 'Enlace'],
   materiales: ['Recursos', 'Materiales'],
@@ -89,6 +101,8 @@ function crearHoja() {
   ensureSheet_(ss, SHEET_RECURSOS, ['Etiqueta', 'Enlace', 'Notas', 'Ámbito', 'Categoría'], [
     ['Repo de prácticas PCD', 'https://github.com/', 'Cambia este link por el de tu repo', 'Escuela', 'Programación para Ciencia de Datos']
   ]);
+  ensureSheet_(ss, SHEET_PLAN, ['ID', 'Actividad', 'Días', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Notas']);
+  ensureSheet_(ss, SHEET_CAL_IPN, ['Evento', 'Inicio', 'Fin', 'Tipo', 'Notas']);
 
   // Menús desplegables en la hoja (por si editas directo ahí)
   const cols = colMap_(tareas);
@@ -102,7 +116,7 @@ function crearHoja() {
   if (cols.estado) tareas.getRange(2, cols.estado, rows).setDataValidation(list(ESTADOS));
   if (cols.prioridad) tareas.getRange(2, cols.prioridad, rows).setDataValidation(list(PRIORIDADES));
   tareas.setFrozenRows(1);
-  Logger.log('Listo. Pestañas: ' + [SHEET_TAREAS, SHEET_EQUIPO, SHEET_RECURSOS].join(', '));
+  Logger.log('Listo. Pestañas: ' + [SHEET_TAREAS, SHEET_EQUIPO, SHEET_RECURSOS, SHEET_PLAN, SHEET_CAL_IPN].join(', '));
 }
 
 function ensureSheet_(ss, name, headers, seed) {
@@ -147,8 +161,12 @@ function doPost(e) {
 
 function getBoard_() {
   return { ok: true, tasks: readTasks_(), team: getTeam_(), recursos: getRecursos_(), ambitos: AMBITOS,
+           horario: optional_(getHorario_), plan: optional_(getPlan_), calendario: optional_(getCalendarioIPN_),
            estados: ESTADOS, prioridades: PRIORIDADES, miWhatsapp: myPhone_(), serverTime: now_() };
 }
+
+/** Una pestaña opcional con un error (o que no existe) no debe tumbar el tablero. */
+function optional_(fn) { try { return fn(); } catch (err) { Logger.log(err); return []; } }
 
 function readTasks_() {
   const sh = sheet_(SHEET_TAREAS);
@@ -184,6 +202,8 @@ function saveTask_(task, user) {
       prioridad: PRIORIDADES.indexOf(task.prioridad) > -1 ? task.prioridad : 'Normal',
       fecha: parseDate_(task.fecha),
       hora: /^\d{1,2}:\d{2}$/.test(String(task.hora || '')) ? "'" + task.hora : '',
+      inicio: parseDate_(task.inicio),
+      instituciones: cleanInstituciones_(task.instituciones),
       notas: clean_(task.notas).slice(0, 5000),
       enlace: clean_(task.enlace).slice(0, 1000),
       materiales: clean_(cleanMats_(task.materiales)),
@@ -265,8 +285,32 @@ function avisoDiario(forzar) {
   if (vencidas.length) out.push('', '*Vencidas*', ...vencidas.map(linea));
   if (deHoy.length) out.push('', '*Hoy*', ...deHoy.map(linea));
   if (deMan.length) out.push('', '*Mañana*', ...deMan.map(linea));
+  const bloques = planForDate_(optional_(getPlan_), hoy);
+  if (bloques.length) out.push('', '*Plan de estudio de hoy*', ...bloques.map(b => '• ' + b.inicio + '–' + b.fin + ' ' + b.actividad));
   if (out.length === 1) out.push('', 'Nada pendiente para hoy ni mañana.');
   sendWhatsApp_(out.join('\n'));
+}
+
+/** Bloques de la pestaña Plan que tocan en una fecha (yyyy-MM-dd), ordenados por hora. */
+function planForDate_(plan, ymd) {
+  const p = ymd.split('-').map(Number);
+  const dow = new Date(p[0], p[1] - 1, p[2]).getDay();
+  return plan.filter(b => (!b.desde || b.desde <= ymd) && (!b.hasta || ymd <= b.hasta) && diasSet_(b.dias).indexOf(dow) > -1)
+    .sort((a, b) => a.inicio < b.inicio ? -1 : 1);
+}
+
+/** "Diario", "L-V", "L,M,X" → [0..6] (0 = domingo). */
+function diasSet_(txt) {
+  const s = String(txt || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (!s.trim() || /DIARIO|TODOS/.test(s)) return [0, 1, 2, 3, 4, 5, 6];
+  const map = { L: 1, M: 2, X: 3, J: 4, V: 5, S: 6, D: 0 }, order = ['L', 'M', 'X', 'J', 'V', 'S', 'D'], out = [];
+  const words = { LUN: 'L', MAR: 'M', MIE: 'X', JUE: 'J', VIE: 'V', SAB: 'S', DOM: 'D' };
+  s.split(/[,\s/]+/).map(t => words[t.slice(0, 3)] && t.length > 1 && t.indexOf('-') === -1 ? words[t.slice(0, 3)] : t).forEach(tok => {
+    const r = tok.match(/^([LMXJVSD])-([LMXJVSD])$/);
+    if (r) { for (let i = order.indexOf(r[1]); i <= order.indexOf(r[2]); i++) out.push(map[order[i]]); }
+    else if (map[tok] !== undefined) out.push(map[tok]);
+  });
+  return out;
 }
 
 function sendWhatsApp_(text) {
@@ -296,6 +340,72 @@ function getTeam_() {
     .filter(r => String(r[0]).trim())
     .map(r => ({ nombre: String(r[0]).trim(), color: String(r[1] || '#E5E5E5').trim() }));
   return team.length ? team : fallback;
+}
+
+/**
+ * Horario de clases (pestaña "Horario", tal como la armaste): una columna de horas "07:00 - 08:30"
+ * y una columna por día (Lunes … Domingo). Devuelve [{dia, inicio, fin, texto}] con dia 0 = domingo.
+ */
+function getHorario_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_HORARIO);
+  if (!sh || sh.getLastRow() < 2) return [];
+  const data = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getDisplayValues();
+  const norm = s => String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const DIAS = { domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueves: 4, viernes: 5, sabado: 6 };
+  const hr = data.findIndex(r => r.some(c => DIAS[norm(c)] !== undefined));
+  if (hr === -1) return [];
+  const head = data[hr].map(norm);
+  const horaCol = head.findIndex(h => /^hora/.test(h));
+  const out = [];
+  for (let i = hr + 1; i < data.length; i++) {
+    const m = String(data[i][horaCol] || '').match(/(\d{1,2}):(\d{2})\s*[-–a]+\s*(\d{1,2}):(\d{2})/);
+    if (!m) continue;
+    const inicio = m[1].padStart(2, '0') + ':' + m[2], fin = m[3].padStart(2, '0') + ':' + m[4];
+    head.forEach((h, c) => {
+      const txt = String(data[i][c] || '').trim();
+      if (DIAS[h] !== undefined && txt) out.push({ dia: DIAS[h], inicio: inicio, fin: fin, texto: txt });
+    });
+  }
+  return out;
+}
+
+/** Bloques de estudio (pestaña "Plan": ID · Actividad · Días · Inicio · Fin · Desde · Hasta · Notas). */
+function getPlan_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PLAN);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues()
+    .filter(r => String(r[1]).trim() && fmtTime_(r[3]) && fmtTime_(r[4]))
+    .map(r => ({ id: String(r[0] || '').trim(), actividad: String(r[1]).trim(), dias: String(r[2] || '').trim(),
+                 inicio: fmtTime_(r[3]), fin: fmtTime_(r[4]), desde: fmtDay_(r[5]), hasta: fmtDay_(r[6]),
+                 notas: String(r[7] || '').trim() }));
+}
+
+/** Calendario académico (pestaña "Calendario IPN": Evento · Inicio · Fin · Tipo · Notas). */
+function getCalendarioIPN_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CAL_IPN);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues()
+    .filter(r => String(r[0]).trim() && fmtDay_(r[1]))
+    .map(r => ({ evento: String(r[0]).trim(), inicio: fmtDay_(r[1]), fin: fmtDay_(r[2]) || fmtDay_(r[1]),
+                 tipo: String(r[3] || '').trim(), notas: String(r[4] || '').trim() }));
+}
+
+function fmtDay_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+  const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[0] : '';
+}
+function fmtTime_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TZ, 'HH:mm');
+  const m = String(v || '').match(/^(\d{1,2}):(\d{2})/);
+  return m ? m[1].padStart(2, '0') + ':' + m[2] : '';
+}
+
+/** "AWS, Udemy" → máximo dos escuelas/plataformas, sin repetir. */
+function cleanInstituciones_(v) {
+  const list = (Array.isArray(v) ? v : String(v || '').split(','))
+    .map(s => String(s).replace(/[=+@]/g, '').trim()).filter(Boolean);
+  return list.filter((s, i) => list.indexOf(s) === i).slice(0, MAX_INSTITUCIONES).map(s => s.slice(0, 40)).join(', ');
 }
 
 /** Recursos (pestaña "Recursos": Etiqueta · Enlace · Notas · Ámbito · Categoría). Ámbito/Categoría vacíos = aplica a todo. */
@@ -364,7 +474,7 @@ function nextId_(sh, cols, prefix) {
 
 function fmt_(key, v) {
   if (v instanceof Date) {
-    if (key === 'fecha') return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+    if (key === 'fecha' || key === 'inicio') return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
     if (key === 'hora') return Utilities.formatDate(v, TZ, 'HH:mm');
     return Utilities.formatDate(v, TZ, 'yyyy-MM-dd HH:mm');
   }
