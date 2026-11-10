@@ -76,7 +76,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- encabezado ---------- */
 header.top {
   display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center;
-  background: linear-gradient(135deg, #161616, #0C0C0C 60%);
+  background: linear-gradient(135deg, rgba(22,22,22,.55), rgba(12,12,12,.38) 60%);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
   border: 1px solid var(--border-default); border-radius: var(--radius-xl);
   padding: 20px 24px; box-shadow: var(--shadow-card);
 }
