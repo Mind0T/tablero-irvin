@@ -88,8 +88,36 @@ Canales (propiedades del script):
 | `FORMSPREE_ENDPOINT` | Tu formulario, ej. `https://formspree.io/f/xxxx`. En Formspree activa el plugin **WhatsApp** en la pestaña *Workflow* del formulario. |
 | `FORMSPREE_LIMITE` | Envíos al mes antes de pausar Formspree. Por defecto 50 (plan gratis). Súbelo si tienes un plan de pago. |
 | `CALLMEBOT_APIKEY` | Opcional y gratis. Se usa si no hay Formspree o si ya se acabó el cupo del mes. |
+| `AVISOS_WHATSAPP` | Opcional. `todo` manda todos los avisos; `resumen` solo el de la mañana y las citas con hora. Si la sincronización con Google Calendar está activa, por defecto es `resumen`. |
 
-Un día normal son unos 15 mensajes (unos 450 al mes): el plan gratis de Formspree no alcanza, así que conviene CallMeBot como respaldo o un plan de pago.
+Sin Google Calendar, un día normal son unos 15 mensajes (unos 450 al mes): el plan gratis de Formspree (50) no alcanza, así que conviene CallMeBot como respaldo o un plan de pago. Con la sincronización activa (siguiente sección) solo llegan el resumen de la mañana y las citas con hora: unos 35 al mes.
+
+## Google Calendar (calendario «Dame la Vida»)
+
+Un calendario aparte, creado en tu cuenta, que se mantiene igual a la hoja: clases del Horario, rutina de Fijas, bloques del Plan, fechas límite de las asignaciones y calendario del IPN. Tu calendario personal no se toca; si algo sale mal, borras «Dame la Vida» y listo.
+
+1. Pega el `Code.gs` nuevo y publica una **nueva versión** (Implementar → Gestionar implementaciones → ✏️).
+2. Ejecuta **`simularSincronizacion`** (acepta los permisos de Calendar). Solo cuenta qué crearía, no toca nada.
+3. Ejecuta **`instalarSincronizacion`**: crea el calendario, hace la primera carga y deja una sincronización diaria (≈5 a.m.).
+4. En el celular, abre Google Calendar y revisa que «Dame la Vida» esté activo y con notificaciones.
+
+Recordatorios (minutos antes; se cambian en `CAL_AVISOS`):
+
+| Qué | Aviso |
+|-----|-------|
+| Clases, deporte, traslados, estudio (Plan) | 15 min antes |
+| Medicamento | 15 min antes y a la hora |
+| Comidas, despertar, leer | A la hora (Dormir no avisa: su columna *Aviso* está vacía) |
+| Pagos, fechas límite, calendario IPN | Un día antes a las 9:00 |
+| Citas, exámenes y tareas con hora | Un día antes y 1 h antes |
+
+Colores: clases y deporte en azul, comidas en verde claro, medicamento en morado, pagos en amarillo y las asignaciones por urgencia (rojo, naranja, verde).
+
+- **La hoja manda.** Cada día se corrige solo, y unos 2 min después de guardar, mover o borrar una asignación en el tablero. Para forzarlo: `sincronizarCalendario`. Cambios en Plan, Fijas u Horario tardan hasta el día siguiente o hasta que lo ejecutes.
+- **Qué se crea.** Repeticiones hasta 3 meses adelante (las que no tienen fin quedan abiertas) y los pagos mes a mes. Los días sin clases, descansos y excepciones se respetan. No se crean eventos de antes de la primera corrida.
+- **Pestaña «Sync Calendario»**: se crea sola y guarda qué eventos son del script. No la borres ni la edites; si la borras, se vuelven a crear los eventos y quedarían duplicados.
+- **Funciones:** `simularSincronizacion` · `sincronizarCalendario` · `instalarSincronizacion` · `quitarSincronizacion` (apaga; el calendario se queda) · `borrarCalendario` (borra «Dame la Vida» completo).
+- Si la primera carga tarda más de ~4 min, sigue sola en otra corrida.
 
 Funciones (▶ en el editor): **`probarRecordatorio`** manda un mensaje de prueba, **`verAvisosDeHoy`** lista en el registro lo que te llegaría hoy, **`instalarRecordatorios`** los activa y **`quitarRecordatorios`** los apaga.
 

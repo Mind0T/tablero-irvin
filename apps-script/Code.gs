@@ -20,7 +20,9 @@
  *   FORMSPREE_ENDPOINT  https://formspree.io/f/xxxx  (recordatorios por el plugin de WhatsApp de Formspree)
  *   FORMSPREE_LIMITE    (opcional) envíos al mes antes de pausar Formspree; por defecto 50 (plan gratis)
  *   CALLMEBOT_APIKEY    (opcional) canal gratis de WhatsApp; se usa si no hay Formspree o si se acabó el cupo
+ *   AVISOS_WHATSAPP     (opcional) 'resumen' o 'todo'; con Google Calendar sincronizado es 'resumen' por defecto
  * Recordatorios a lo largo del día: ejecuta instalarRecordatorios() una vez (ver README).
+ * Google Calendar: ejecuta instalarSincronizacion() una vez (crea el calendario «Dame la Vida», ver README).
  */
 
 const SHEET_TAREAS = 'Tareas';
@@ -236,6 +238,7 @@ function saveTask_(task, user) {
       });
       writeRow_(sh, cols, row, values);
     }
+    avisarCambio_();
     return getBoard_();
   });
 }
@@ -248,6 +251,7 @@ function moveTask_(id, estado, user) {
     const row = findRow_(sh, cols, id);
     if (row === -1) throw new Error('No encontré la tarea ' + id + '.');
     writeRow_(sh, cols, row, { estado: estado, actualizado: now_(), actualizadoPor: clean_(user).slice(0, 60) || RESPONSABLE_DEFAULT });
+    avisarCambio_();
     return getBoard_();
   });
 }
@@ -257,6 +261,7 @@ function deleteTask_(id) {
     const sh = sheet_(SHEET_TAREAS);
     const row = findRow_(sh, colMap_(sh), id);
     if (row !== -1) sh.deleteRow(row);
+    avisarCambio_();
     return getBoard_();
   });
 }
@@ -322,9 +327,9 @@ function recordatorios() {
 /** Todos los avisos de un día: [{aviso:'HH:mm', texto}] ordenados. */
 function eventosConAviso_(ymd) {
   const out = [], resumenEn = { hecho: false };
-  const add = (hhmm, minAntes, texto) => {
+  const add = (hhmm, minAntes, texto, esencial) => {
     const m = minutos_(hhmm); if (m === null) return;
-    out.push({ aviso: hhmmDe_(Math.max(0, m - minAntes)), texto: texto });
+    out.push({ aviso: hhmmDe_(Math.max(0, m - minAntes)), texto: texto, esencial: !!esencial });
   };
   const ev = eventosDelDia_(ymd);
   ev.clases.forEach(c => add(c.inicio, AVISO_CLASE_MIN, 'En ' + AVISO_CLASE_MIN + ' min: ' + c.titulo + (c.lugar ? ' · ' + c.lugar : '') + ' (' + c.inicio + '–' + c.fin + ')'));
@@ -334,12 +339,21 @@ function eventosConAviso_(ymd) {
     let txt = (antes ? 'En ' + antes + ' min: ' : '') + f.actividad + (f.fin ? ' (' + f.inicio + '–' + f.fin + ')' : ' · ' + f.inicio) +
       (f.lugar ? '\n' + f.lugar : '') + (f.notas ? '\n' + f.notas : '');
     if (!resumenEn.hecho && /despert/i.test(f.actividad)) { txt = '¡Buenos días! ' + txt + '\n\n' + resumenDelDia_(ymd); resumenEn.hecho = true; }
-    add(f.inicio, antes, txt);
+    add(f.inicio, antes, txt, resumenEn.hecho && /despert/i.test(f.actividad) && txt.indexOf('Buenos días') > -1);
   });
   ev.plan.forEach(b => add(b.inicio, AVISO_PLAN_MIN, 'Ahora: ' + b.actividad + ' hasta las ' + b.fin + (b.notas ? '\n' + b.notas : '')));
-  ev.tareas.filter(t => t.hora).forEach(t => add(t.hora, AVISO_TAREA_MIN, 'En 1 h: ' + t.tipo + ' · ' + t.titulo + ' (' + t.hora + ')' + (t.descripcion ? '\n' + t.descripcion : '')));
-  if (!resumenEn.hecho) out.push({ aviso: '07:00', texto: resumenDelDia_(ymd) });
-  return out.sort((a, b) => a.aviso < b.aviso ? -1 : 1);
+  ev.tareas.filter(t => t.hora).forEach(t => add(t.hora, AVISO_TAREA_MIN, 'En 1 h: ' + t.tipo + ' · ' + t.titulo + ' (' + t.hora + ')' + (t.descripcion ? '\n' + t.descripcion : ''), true));
+  if (!resumenEn.hecho) out.push({ aviso: '07:00', texto: resumenDelDia_(ymd), esencial: true });
+  // Con la sincronización de Google Calendar activa, el calendario avisa de lo rutinario y a WhatsApp
+  // solo llega el resumen de la mañana y las citas con hora (así alcanza el plan gratis de Formspree).
+  const lista = modoAvisos_() === 'resumen' ? out.filter(e => e.esencial) : out;
+  return lista.sort((a, b) => a.aviso < b.aviso ? -1 : 1);
+}
+
+/** 'resumen' = solo resumen de la mañana y citas con hora; 'todo' = todos los avisos de la hoja. */
+function modoAvisos_() {
+  const p = PropertiesService.getScriptProperties();
+  return p.getProperty('AVISOS_WHATSAPP') || (p.getProperty('CAL_SYNC_ACTIVA') ? 'resumen' : 'todo');
 }
 
 /** Resumen corto: pagos y entregas de hoy, vencidas, lo de mañana y el plan de estudio. */
@@ -362,11 +376,7 @@ function resumenDelDia_(ymd) {
 
 /** Clases, fijas, bloques del plan y tareas con fecha de un día. */
 function eventosDelDia_(ymd) {
-  const cal = optional_(getCalendarioIPN_);
-  const enRango = e => e.inicio <= ymd && ymd <= (e.fin || e.inicio);
-  const libre = cal.some(e => enRango(e) && /descanso|vacaci/i.test(e.tipo));
-  const periodos = cal.filter(e => /^clases$/i.test(e.tipo));
-  const hayClases = !libre && (!periodos.length || periodos.some(enRango));
+  const hayClases = hayClasesEn_(optional_(getCalendarioIPN_), ymd);
   const dow = dowDe_(ymd);
   const clases = !hayClases ? [] : optional_(getHorario_).filter(h => h.dia === dow).map(h => {
     const ci = infoClase_(h.texto); return { titulo: ci.titulo, lugar: ci.lugar, inicio: h.inicio, fin: h.fin };
@@ -376,6 +386,14 @@ function eventosDelDia_(ymd) {
   tareas.forEach(t => tareasPorId[t.id] = t);
   const plan = planForDate_(optional_(getPlan_), ymd).filter(b => !(tareasPorId[b.id] && tareasPorId[b.id].estado === 'Done'));
   return { clases: clases, fijas: fijas, plan: plan, tareas: tareas.filter(t => t.estado !== 'Done' && t.fecha === ymd) };
+}
+
+/** ¿Hay clases ese día? Sí dentro del periodo «Clases» del calendario IPN y fuera de descansos y vacaciones. */
+function hayClasesEn_(cal, ymd) {
+  const enRango = e => e.inicio <= ymd && ymd <= (e.fin || e.inicio);
+  const libre = cal.some(e => enRango(e) && /descanso|vacaci/i.test(e.tipo));
+  const periodos = cal.filter(e => /^clases$/i.test(e.tipo));
+  return !libre && (!periodos.length || periodos.some(enRango));
 }
 
 function fijasDelDia_(fijas, ymd) {
@@ -476,6 +494,340 @@ function myPhone_() {
   let d = String(PropertiesService.getScriptProperties().getProperty('MI_WHATSAPP') || '').replace(/\D/g, '');
   if (d.length === 10) d = '52' + d;
   return d.length >= 11 ? d : '';
+}
+
+/* ================== SINCRONIZACIÓN CON GOOGLE CALENDAR ================== */
+// Mantiene un calendario aparte, «Dame la Vida», igual a tu hoja: clases, rutina fija, bloques del Plan,
+// fechas límite de las asignaciones y calendario del IPN, con recordatorios en el celular.
+// La hoja manda: lo que cambies aquí se corrige solo en el calendario (cada día a las 5 a.m., y unos
+// minutos después de guardar una asignación desde el tablero). Los eventos se guardan en la pestaña
+// «Sync Calendario» para saber cuáles son tuyos; tu calendario personal nunca se toca.
+//   instalarSincronizacion()   activa todo y hace la primera carga
+//   simularSincronizacion()    solo cuenta qué crearía/cambiaría/borraría (no toca el calendario)
+//   sincronizarCalendario()    sincroniza ahora
+//   quitarSincronizacion()     apaga la sincronización (el calendario se queda como está)
+//   borrarCalendario()         borra el calendario «Dame la Vida» completo
+
+const CAL_NOMBRE = 'Dame la Vida';
+const SHEET_SYNC = 'Sync Calendario';
+const CAL_MESES_ADELANTE = 3;        // hasta qué mes se crean las repeticiones que tienen fin y los pagos
+const CAL_HORA_SYNC = 5;             // sincronización diaria (a.m.)
+const CAL_TIEMPO_MAX_MS = 270000;    // Apps Script corta a los 6 min: si falta, sigue en otra corrida
+const CAL_PAUSA_MS = 80;
+// Minutos antes del inicio. 900 = un día antes a las 9:00 (para eventos de todo el día).
+const CAL_AVISOS = {
+  clase: [15], horario: [15], plan: [15], deporte: [15], traslado: [15], hogar: [15],
+  medicamento: [15, 0], comida: [0], rutina: [0], pago: [900],
+  tarea: [900],            // fecha límite sin hora
+  tareaHora: [1440, 60],   // con hora (citas, exámenes): un día antes y 1 h antes
+  ipn: [900]
+};
+const CAL_COLORES = {
+  clase: 'BLUE', horario: 'BLUE', deporte: 'BLUE', comida: 'PALE_GREEN', medicamento: 'MAUVE', rutina: 'GRAY',
+  traslado: 'GRAY', hogar: 'CYAN', pago: 'YELLOW', ipn: 'GRAY', Urgente: 'RED', Importante: 'ORANGE', Normal: 'GREEN'
+};
+const CAL_DOW = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+/** Activa la sincronización diaria y hace la primera carga. Ejecútala una vez. */
+function instalarSincronizacion() {
+  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'sincronizarCalendario') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('sincronizarCalendario').timeBased().everyDays(1).atHour(CAL_HORA_SYNC).create();
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty('CAL_SYNC_ACTIVA', '1');
+  props.deleteProperty('CAL_SYNC_PENDIENTE');
+  Logger.log('Sincronización diaria activa (≈' + CAL_HORA_SYNC + ' a.m.). Los avisos de WhatsApp pasan a modo «resumen» (propiedad AVISOS_WHATSAPP = todo para volver a todos).');
+  sincronizarCalendario();
+}
+
+function quitarSincronizacion() {
+  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'sincronizarCalendario') ScriptApp.deleteTrigger(t); });
+  const props = PropertiesService.getScriptProperties();
+  props.deleteProperty('CAL_SYNC_ACTIVA'); props.deleteProperty('CAL_SYNC_PENDIENTE');
+  Logger.log('Sincronización apagada. Los eventos ya creados siguen en el calendario «' + CAL_NOMBRE + '».');
+}
+
+/** Borra el calendario «Dame la Vida» con todos sus eventos y limpia la pestaña de control. */
+function borrarCalendario() {
+  quitarSincronizacion();
+  const cals = CalendarApp.getCalendarsByName(CAL_NOMBRE);
+  cals.forEach(c => c.deleteCalendar());
+  const id = PropertiesService.getScriptProperties().getProperty('CAL_ID');
+  if (id) { const c = CalendarApp.getCalendarById(id); if (c) c.deleteCalendar(); }
+  PropertiesService.getScriptProperties().deleteProperty('CAL_ID');
+  PropertiesService.getScriptProperties().deleteProperty('CAL_SYNC_INICIO');
+  syncGuardar_({});
+  Logger.log('Calendario «' + CAL_NOMBRE + '» borrado.');
+}
+
+function sincronizarCalendario() { return sincronizar_(false); }
+function simularSincronizacion() { return sincronizar_(true); }
+
+function sincronizar_(simular) {
+  const props = PropertiesService.getScriptProperties(), t0 = Date.now();
+  const enCurso = Number(props.getProperty('CAL_SYNC_EN_CURSO') || 0);
+  if (!simular && enCurso && t0 - enCurso < 7 * 60000) { Logger.log('Ya hay una sincronización en curso.'); return null; }
+  if (!simular) props.setProperty('CAL_SYNC_EN_CURSO', String(t0));
+  try {
+    const pend = props.getProperty('CAL_SYNC_PENDIENTE');
+    if (pend && !simular) {
+      ScriptApp.getProjectTriggers().forEach(t => { if (t.getUniqueId() === pend) ScriptApp.deleteTrigger(t); });
+      props.deleteProperty('CAL_SYNC_PENDIENTE');
+    }
+    let mapa = syncLeer_(), cal = null;
+    if (!simular) {
+      const c = calCalendario_();
+      cal = c.cal;
+      if (c.nuevo) mapa = {};   // el calendario se creó de cero: nada de lo anotado existe ya
+    }
+    const deseados = {};
+    calSpecs_(!simular).forEach(s => { deseados[s.key] = s; });
+
+    const borrar = [], crear = [];
+    Object.keys(mapa).forEach(k => { if (!deseados[k]) borrar.push(k); });
+    Object.keys(deseados).forEach(k => {
+      if (!mapa[k]) crear.push(k);
+      else if (mapa[k].hash !== deseados[k].hash) { borrar.push(k); crear.push(k); }
+    });
+    const cambian = crear.filter(k => mapa[k]).length;
+    const resumen = 'Crear ' + (crear.length - cambian) + ' · cambiar ' + cambian + ' · borrar ' + (borrar.length - cambian) +
+      ' · sin cambios ' + (Object.keys(deseados).length - crear.length);
+    if (simular) {
+      Logger.log('Simulación: ' + resumen);
+      crear.slice(0, 40).forEach(k => Logger.log('  + ' + deseados[k].titulo + ' (' + deseados[k].kind + ')'));
+      if (crear.length > 40) Logger.log('  … y ' + (crear.length - 40) + ' más');
+      return { crear: crear.length, borrar: borrar.length, cambian: cambian };
+    }
+
+    let hechos = 0, parado = false;
+    const sinTiempo = () => Date.now() - t0 > CAL_TIEMPO_MAX_MS;
+    for (const k of borrar) {
+      if (sinTiempo()) { parado = true; break; }
+      calBorrar_(cal, mapa[k]); delete mapa[k]; hechos++; Utilities.sleep(CAL_PAUSA_MS);
+    }
+    if (!parado) for (const k of crear) {
+      if (sinTiempo()) { parado = true; break; }
+      const s = deseados[k];
+      try {
+        mapa[k] = { hash: s.hash, kind: s.kind, id: calCrear_(cal, s), titulo: s.titulo };
+      } catch (err) { Logger.log('No pude crear «' + s.titulo + '»: ' + err); }
+      hechos++; Utilities.sleep(CAL_PAUSA_MS);
+      if (hechos % 25 === 0) syncGuardar_(mapa);
+    }
+    syncGuardar_(mapa);
+    Logger.log('Sincronizado: ' + resumen + (parado ? ' (parcial: sigo en un minuto)' : '') + '.');
+    if (parado) programarSync_(1);
+    return { creados: crear.length, parcial: parado };
+  } finally { if (!simular) props.deleteProperty('CAL_SYNC_EN_CURSO'); }
+}
+
+/** Calendario «Dame la Vida»: lo busca o lo crea. nuevo = true si hubo que crearlo. */
+function calCalendario_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('CAL_ID');
+  let cal = id ? CalendarApp.getCalendarById(id) : null, nuevo = false;
+  if (!cal) cal = CalendarApp.getCalendarsByName(CAL_NOMBRE)[0] || null;
+  if (!cal) {
+    cal = CalendarApp.createCalendar(CAL_NOMBRE, { summary: 'Clases, rutina, estudio y fechas del tablero «Dame la Vida». Se actualiza solo desde la hoja.', timeZone: TZ });
+    nuevo = true;
+  }
+  try { cal.setTimeZone(TZ); cal.setSelected(true); cal.setHidden(false); } catch (err) { Logger.log(err); }
+  if (nuevo) { try { cal.setColor('#4986E7'); } catch (err) { Logger.log(err); } }
+  props.setProperty('CAL_ID', cal.getId());
+  return { cal: cal, nuevo: nuevo };
+}
+
+function calCrear_(cal, s) {
+  const opts = { description: s.desc };
+  if (s.lugar) opts.location = s.lugar;
+  const dia = ymd => new Date(msDe_(ymd, '12:00'));
+  let ev;
+  if (s.kind === 'serie') {
+    const rec = CalendarApp.newRecurrence();
+    const regla = rec.addWeeklyRule().onlyOnWeekdays(s.dias.map(d => CalendarApp.Weekday[CAL_DOW[d]]));
+    if (s.veces) regla.times(s.veces);
+    ev = cal.createEventSeries(s.titulo, new Date(s.ini), new Date(s.fin), rec, opts);
+  } else if (s.kind === 'evento') {
+    ev = cal.createEvent(s.titulo, new Date(s.ini), new Date(s.fin), opts);
+  } else if (s.ymdFin && s.ymdFin > s.ymd) {
+    ev = cal.createAllDayEvent(s.titulo, dia(s.ymd), dia(ymdMas_(s.ymdFin, 1)), opts);   // el fin es exclusivo
+  } else {
+    ev = cal.createAllDayEvent(s.titulo, dia(s.ymd), opts);
+  }
+  ev.removeAllReminders();
+  s.avisos.forEach(m => ev.addPopupReminder(m));
+  if (s.color && CalendarApp.EventColor[s.color]) ev.setColor(CalendarApp.EventColor[s.color]);
+  return ev.getId();
+}
+
+function calBorrar_(cal, e) {
+  try {
+    if (e.kind === 'serie') { const s = cal.getEventSeriesById(e.id); if (s) s.deleteEventSeries(); }
+    else { const v = cal.getEventById(e.id); if (v) v.deleteEvent(); }
+  } catch (err) { Logger.log('No pude borrar «' + e.titulo + '»: ' + err); }
+}
+
+/** Tras guardar, mover o borrar una asignación: el calendario se pone al día en un par de minutos. */
+function avisarCambio_() { try { programarSync_(2); } catch (err) { Logger.log(err); } }
+
+/** Programa una sincronización en unos minutos (una sola a la vez). Solo si la sincronización está activa. */
+function programarSync_(minutos) {
+  const props = PropertiesService.getScriptProperties();
+  if (!props.getProperty('CAL_SYNC_ACTIVA')) return;
+  const id = props.getProperty('CAL_SYNC_PENDIENTE');
+  if (id && ScriptApp.getProjectTriggers().some(t => t.getUniqueId() === id)) return;
+  const t = ScriptApp.newTrigger('sincronizarCalendario').timeBased().after(minutos * 60000).create();
+  props.setProperty('CAL_SYNC_PENDIENTE', t.getUniqueId());
+}
+
+/* --- pestaña de control: Clave · Huella · Tipo · ID · Título --- */
+function syncLeer_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SYNC);
+  const mapa = {};
+  if (!sh || sh.getLastRow() < 2) return mapa;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues().forEach(r => {
+    if (r[0] && r[3]) mapa[String(r[0])] = { hash: String(r[1]), kind: String(r[2]), id: String(r[3]), titulo: String(r[4]) };
+  });
+  return mapa;
+}
+
+function syncGuardar_(mapa) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ensureSheet_(ss, SHEET_SYNC, ['Clave', 'Huella', 'Tipo', 'ID', 'Título']);
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 5).clearContent();
+  const filas = Object.keys(mapa).sort().map(k => [k, mapa[k].hash, mapa[k].kind, mapa[k].id, clean_(mapa[k].titulo)]);
+  if (filas.length) sh.getRange(2, 1, filas.length, 5).setValues(filas);
+}
+
+/** Primer día que se sincroniza: se fija en la primera corrida (no se crean eventos del pasado). */
+function calInicio_(guardar) {
+  const props = PropertiesService.getScriptProperties();
+  let d = props.getProperty('CAL_SYNC_INICIO');
+  if (!d) { d = hoy_(); if (guardar) props.setProperty('CAL_SYNC_INICIO', d); }
+  return d;
+}
+
+function calHash_(obj) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(obj), Utilities.Charset.UTF_8);
+  return 'h' + bytes.map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('');
+}
+
+/** Todo lo que debe existir en el calendario: [{key, kind: serie|evento|dia, titulo, desc, lugar, color, avisos, hash, …}]. */
+function calSpecs_(guardarInicio) {
+  const hoy = hoy_(), inicio = calInicio_(guardarInicio);
+  const p = hoy.split('-').map(Number);
+  const finMes = new Date(p[0], p[1] - 1 + CAL_MESES_ADELANTE + 1, 0, 12);      // último día del mes de adelante
+  const fin = Utilities.formatDate(finMes, TZ, 'yyyy-MM-dd');
+  const horario = optional_(getHorario_), plan = optional_(getPlan_), fijas = optional_(getFijas_), ipn = optional_(getCalendarioIPN_);
+  const tareas = readTasks_(), porId = {};
+  tareas.forEach(t => porId[t.id] = t);
+  const hecha = id => !!(porId[id] && porId[id].estado === 'Done');
+  const tope = ymdMas_(inicio, 400);                      // las repeticiones con "Hasta" se calculan completas
+  let finMax = fin;
+  fijas.concat(plan).forEach(x => { if (x.hasta && x.hasta > finMax) finMax = x.hasta < tope ? x.hasta : tope; });
+
+  // 1. En qué fechas cae cada cosa (la misma lógica que el tablero y los avisos)
+  const fechasDe = {}, push = (k, d) => (fechasDe[k] = fechasDe[k] || []).push(d);
+  horario.forEach(h => { h.ci = infoClase_(h.texto); h.k = 'h|' + h.dia + '|' + h.inicio + '|' + h.fin + '|' + h.ci.titulo; });
+  plan.forEach(b => { b.k = 'p|' + b.id + '|' + b.actividad + '|' + b.dias + '|' + b.inicio + '|' + b.fin + '|' + b.desde; });
+  fijas.forEach(f => { f.k = 'f|' + f.actividad + '|' + f.dias + '|' + f.diaMes + '|' + f.inicio + '|' + f.desde; });
+  for (let d = inicio; d <= finMax; d = ymdMas_(d, 1)) {
+    const clases = hayClasesEn_(ipn, d), dow = dowDe_(d);
+    horario.forEach(h => { if (clases && h.dia === dow) push(h.k, d); });
+    fijasDelDia_(fijas, d).filter(f => clases || !/^clase$/i.test(f.tipo)).forEach(f => push(f.k, d));
+    planForDate_(plan, d).forEach(b => { if (!hecha(b.id)) push(b.k, d); });
+  }
+
+  const specs = [], vistas = {};
+  const add = s => {
+    let k = s.key, n = 2;
+    while (vistas[k]) k = s.key + '~' + n++;           // dos filas idénticas no se pisan
+    vistas[k] = 1; s.key = k;
+    const base = Object.assign({}, s); delete base.key;
+    s.hash = calHash_(base); specs.push(s);
+  };
+  const pie = '\n\n— Se actualiza solo desde tu tablero «Dame la Vida»; cámbialo en la hoja, no aquí.';
+  const norm = v => String(v || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  const hm = (ymd, hhmm) => msDe_(ymd, hhmm);
+
+  // Una repetición con huecos se parte en tramos continuos; cada tramo es una serie de Calendar.
+  const series = (origen, wset, abierta, mk) => {
+    if (!wset.length) return;
+    let fechas = (fechasDe[origen.k] || []).slice();
+    if (!origen.hasta) fechas = fechas.filter(d => d <= fin);   // sin "Hasta": solo hasta el horizonte (la serie queda abierta)
+    if (!fechas.length) return;
+    const set = {}; fechas.forEach(d => set[d] = 1);
+    const ultimaPosible = (() => { let d = fin; while (wset.indexOf(dowDe_(d)) === -1) d = ymdMas_(d, -1); return d; })();
+    const tramos = []; let cur = null;
+    for (let d = fechas[0]; d <= fechas[fechas.length - 1]; d = ymdMas_(d, 1)) {
+      if (wset.indexOf(dowDe_(d)) === -1) continue;
+      if (set[d]) { if (!cur) { cur = []; tramos.push(cur); } cur.push(d); } else cur = null;
+    }
+    tramos.forEach(t => {
+      const abiertaT = abierta && !origen.hasta && t[t.length - 1] === ultimaPosible;
+      mk(t, abiertaT);
+    });
+  };
+
+  // 2. Clases del horario
+  horario.forEach(h => {
+    const lineas = String(h.texto).split('\n').map(l => l.trim()).filter(Boolean);
+    series(h, [h.dia], true, (t, abierta) => emitirTramo(add, { key: h.k, tramo: t, abierta: abierta, titulo: 'Clase · ' + h.ci.titulo,
+      desc: lineas.join('\n') + pie, lugar: h.ci.lugar, inicio: h.inicio, fin: h.fin, tipo: 'clase', avisos: CAL_AVISOS.clase, color: CAL_COLORES.clase, dias: [h.dia] }));
+  });
+
+  // 3. Rutina fija (pestaña Fijas)
+  fijas.forEach(f => {
+    const tipo = norm(f.tipo);
+    const sinAviso = tipo !== 'pago' && (f.aviso === '' || isNaN(Number(f.aviso)));   // columna «Aviso» vacía = sin recordatorio
+    const avisos = sinAviso ? [] : CAL_AVISOS[tipo] || [Number(f.aviso)];
+    const color = CAL_COLORES[tipo] || 'GRAY';
+    const desc = [f.notas, f.lugar && f.lugar !== '' ? 'Lugar: ' + f.lugar : ''].filter(Boolean).join('\n') + pie;
+    const dMin = f.inicio ? (f.fin ? ((minutos_(f.fin) - minutos_(f.inicio)) + 1440) % 1440 || 15 : 15) : 0;
+    if (f.diaMes || !f.inicio) {
+      // pagos y cosas de todo el día: un evento por fecha (el calendario se va llenando mes a mes)
+      (fechasDe[f.k] || []).filter(d => d <= fin).forEach(d =>
+        add(f.inicio
+          ? { key: f.k + '#' + d, kind: 'evento', titulo: f.actividad, desc: desc, lugar: f.lugar, color: color, avisos: avisos, ini: hm(d, f.inicio), fin: hm(d, f.inicio) + dMin * 60000 }
+          : { key: f.k + '#' + d, kind: 'dia', titulo: f.actividad, desc: desc, lugar: f.lugar, color: color, avisos: avisos, ymd: d }));
+      return;
+    }
+    series(f, diasSet_(f.dias), true, (t, abierta) => emitirTramo(add, { key: f.k, tramo: t, abierta: abierta, titulo: f.actividad, desc: desc,
+      lugar: f.lugar, inicio: f.inicio, fin: null, dur: dMin, tipo: tipo, avisos: avisos, color: color, dias: diasSet_(f.dias) }));
+  });
+
+  // 4. Bloques de estudio (pestaña Plan): color por la urgencia de la asignación
+  plan.forEach(b => {
+    const t = porId[b.id];
+    const desc = [b.notas, t ? t.tipo + ' · ' + (t.categoria || '') + (t.prioridad ? ' · ' + t.prioridad : '') : '', t && t.materiales ? 'Recursos:\n' + t.materiales : '', b.id ? 'Asignación ' + b.id : ''].filter(Boolean).join('\n') + pie;
+    series(b, diasSet_(b.dias), true, (tr, abierta) => emitirTramo(add, { key: b.k, tramo: tr, abierta: abierta, titulo: b.actividad, desc: desc, lugar: '',
+      inicio: b.inicio, fin: b.fin, tipo: 'plan', avisos: CAL_AVISOS.plan, color: CAL_COLORES[t ? t.prioridad : 'Normal'] || 'GREEN', dias: diasSet_(b.dias) }));
+  });
+
+  // 5. Asignaciones con fecha límite
+  tareas.filter(t => t.estado !== 'Done' && t.fecha && t.fecha >= inicio).forEach(t => {
+    const desc = [t.descripcion, t.enlace ? 'Entregable: ' + t.enlace : '', t.materiales ? 'Recursos:\n' + t.materiales : '', t.notas, t.id].filter(Boolean).join('\n\n') + pie;
+    const titulo = t.tipo + ': ' + t.titulo, color = CAL_COLORES[t.prioridad] || 'GREEN';
+    if (t.hora) add({ key: 't|' + t.id, kind: 'evento', titulo: titulo, desc: desc, lugar: '', color: color, avisos: CAL_AVISOS.tareaHora, ini: hm(t.fecha, t.hora), fin: hm(t.fecha, t.hora) + 3600000 });
+    else add({ key: 't|' + t.id, kind: 'dia', titulo: titulo, desc: desc, lugar: '', color: color, avisos: CAL_AVISOS.tarea, ymd: t.fecha });
+  });
+
+  // 6. Calendario del IPN (el rango de «Clases» solo sirve para saber cuándo hay clases)
+  ipn.filter(e => !/^clases$/i.test(e.tipo) && (e.fin || e.inicio) >= inicio).forEach(e => {
+    add({ key: 'i|' + e.evento + '|' + e.inicio, kind: 'dia', titulo: e.evento, desc: [e.tipo, e.notas].filter(Boolean).join(' · ') + pie, lugar: '',
+      color: CAL_COLORES.ipn, avisos: CAL_AVISOS.ipn, ymd: e.inicio, ymdFin: e.fin });
+  });
+  return specs;
+}
+
+/** Convierte un tramo de fechas en una serie (o en un evento suelto si es una sola fecha). */
+function emitirTramo(add, o) {
+  const t = o.tramo, d0 = t[0];
+  const dur = o.dur || (((minutos_(o.fin) - minutos_(o.inicio)) + 1440) % 1440 || 15);
+  const ini = msDe_(d0, o.inicio), fin = ini + dur * 60000;
+  const comun = { titulo: o.titulo, desc: o.desc, lugar: o.lugar, color: o.color, avisos: o.avisos };
+  if (t.length === 1 && !o.abierta) add(Object.assign({ key: o.key + '#' + d0, kind: 'evento', ini: ini, fin: fin }, comun));
+  else add(Object.assign({ key: o.key + '#' + d0, kind: 'serie', ini: ini, fin: fin, dias: o.dias.slice().sort(),
+    veces: o.abierta ? 0 : t.length }, comun));
 }
 
 /* ================================ HELPERS ================================ */
