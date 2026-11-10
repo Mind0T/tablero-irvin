@@ -43,6 +43,8 @@ Importa el repo (Framework: **Other**, sin build) y agrega:
 | `API_SECRET`      | La clave de `generarSecreto()`          |
 | `TEAM_CODE`       | Tu código de acceso (lo pide una vez)   |
 
+Al pegar el `Code.gs` nuevo, Apps Script pedirá permiso de **Drive** (para las capturas de los cortes). Acéptalo y publica una nueva versión.
+
 Si cambias `Code.gs`: **Implementar → Gestionar implementaciones → ✏️ → Nueva versión** (la URL no cambia).
 
 ## La hoja
@@ -59,6 +61,9 @@ Si cambias `Code.gs`: **Implementar → Gestionar implementaciones → ✏️ �
 - **Plan**: bloques de estudio. ID (de la tarea) · Actividad · Días · Inicio · Fin · Desde · Hasta · Notas · Excepto (fechas en que no aplica, separadas por coma). Días acepta `Diario`, `L-V` o letras `L,M,X,J,V,S,D`. El color sale de la urgencia de la tarea ligada.
 - **Calendario IPN**: Evento · Inicio · Fin · Tipo · Notas. Tipo `Clases` marca el rango en que se muestra el horario; `Descanso` y `Vacaciones` ocultan las clases ese día.
 - **Hechos**: se crea sola cuando marcas la primera cosa. Clave · Fecha · Marcado en. Cada fila es una ocurrencia marcada como hecha (una clase, bloque de estudio o actividad fija de un día concreto). Si borras una fila, esa marca desaparece.
+- **Temario**: módulos de un curso. Camino (ID de la asignación, ej. `DP-007`) · Bloque · Módulo · Lecciones · Fecha meta · Hecho · Notas. Cada módulo es un hito del camino de esa asignación y se marca desde Progreso (o con la casilla).
+- **Caminos**: hábitos y pagos que se miden en el tiempo. ID · Título · Tipo (`hábito` o `pago`) · Actividad (Fijas) (nombre exacto de la actividad de la pestaña Fijas) · Desde · Hasta · Meta · Meta fecha · Color · Notas. Ej.: medicina hasta el estudio molecular, deuda con Jandy (un hito por pago), ejercicio, lectura.
+- **Cortes**: se llena sola desde el botón *Agregar corte*. Camino · Fecha · Nota · Link · Imagen (ID del archivo en Drive).
 - **Plan UX EBAC**: módulos del curso con su fecha meta y una casilla de Hecho (solo vive en la hoja).
 
 ## Funciones
@@ -66,6 +71,8 @@ Si cambias `Code.gs`: **Implementar → Gestionar implementaciones → ✏️ �
 - **Escuela / Personal**: el selector de arriba cambia de tablero; se recuerda en tu navegador.
 - **Filtros plegables** por materia, tipo, escuela/plataforma y urgencia, más buscador.
 - **Calendario** (Mes / Semana / Día): clases y deporte en azul, comidas como marcas verdes, rutina, pagos, bloques del Plan (color por urgencia: rojo, ámbar, verde), fechas límite y calendario IPN. Toca una clase, actividad fija o bloque de estudio para abrir su ventanita con detalles, WhatsApp, Google Calendar y el botón **Marcar como hecha**. Lo ya pasado del día se ve más tenue. Lo hecho tiene ✓ verde; lo que ya pasó sin marcarse queda con un bullet rojo. Las asignaciones en Doing muestran una barra de progreso (hechas / totales, % transcurrido y % completado).
+- **Progreso**: botón junto a Tablero y Calendario. Cada camino es una carretera con hitos: el **Semestre** (tareas, exámenes y fechas del IPN), una por **materia**, una por **curso o certificación** (módulos del Temario y cortes), y los **hábitos y pagos** de la pestaña Caminos (medicina mes a mes hasta tu estudio de julio, Jandy por pago, ejercicio, lectura). Muestra % recorrido (tiempo) y % hecho. Se filtra por tipo o se elige un camino para verlo solo.
+- **Corte semanal**: los domingos aparece un aviso; *Agregar corte* guarda una nota, un link y/o una captura de pantalla como evidencia dentro del camino. Las capturas se reducen en el navegador y se guardan en tu Drive, carpeta «Dame la Vida · Evidencias», con enlace de solo lectura para quien lo tenga (no aparece en búsquedas).
 - **Reloj** con la hora de Ciudad de México en el encabezado.
 - **Próximo pendiente** con días restantes y conteo de vencidas.
 - **Google Calendar**: con fecha, botón para agregarla (con hora si la pusiste) y `.ics` para otros calendarios, con recordatorio un día antes (y una hora antes si tiene hora).

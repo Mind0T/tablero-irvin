@@ -452,6 +452,51 @@ details.mats > summary:hover { background: var(--bg-surface); }
   .mcell .chipev { font-size: 0; padding: 0; height: 5px; border-left-width: 0; background: var(--b); }
   .mcell .more, .mnum small { display: none; }
 }
+
+/* Progreso: caminos */
+.pgbar2 { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+#progView > * { min-width: 0; }
+.pgbar2 .seg2 { display: flex; flex-wrap: wrap; max-width: 100%; }
+.pgbar2 .seg2 button { flex: 1 1 auto; }
+#pgDetail { min-width: 0; }
+.pgselect { height: 38px; background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 0 10px; font: inherit; max-width: 100%; }
+.pgbanner { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--bg-surface); color: var(--text-primary); font-size: 14px; }
+.pggrid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+.pgempty { color: var(--text-muted); padding: 24px 4px; }
+.pgcard { text-align: left; display: grid; gap: 6px; padding: 14px 16px; background: var(--bg-surface); border: 1px solid var(--border-default); border-top: 3px solid var(--c); border-radius: var(--radius-lg); color: var(--text-secondary); font: inherit; cursor: pointer; transition: var(--transition-base); }
+.pgcard:hover { border-color: var(--border-strong); background: var(--bg-surface-2); transform: translateY(-1px); }
+.pgcard b { color: var(--text-primary); font: 700 15px/1.25 var(--font-display); }
+.pgcard small, .pghead small { color: var(--text-muted); font-size: 12px; }
+.pgg { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
+.pgnums { display: flex; gap: 14px; font-size: 12px; } .pgnums b { font: 800 16px var(--font-display); }
+.mini { width: 100%; height: 26px; } .mini .mr0 { stroke: var(--border-strong); stroke-width: 4; stroke-linecap: round; fill: none; } .mini .mr1 { stroke-width: 4; stroke-linecap: round; fill: none; }
+.mini .md { fill: var(--bg-base); stroke: var(--text-muted); stroke-width: 1.4; } .mini .md.ok { fill: var(--color-ok); stroke: var(--color-ok); } .mini .md.bad { fill: var(--color-error); stroke: var(--color-error); }
+.mini .mv { stroke: var(--bg-base); stroke-width: 2; }
+.pghead { display: grid; grid-template-columns: auto 1fr auto; gap: 12px 18px; align-items: center; padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-default); border-left: 4px solid var(--c); border-radius: var(--radius-lg); }
+.pghead h2 { margin: 2px 0; font: 800 22px/1.15 var(--font-display); color: var(--text-primary); }
+.pgstat { display: flex; gap: 18px; } .pgstat div { display: grid; text-align: center; } .pgstat b { font: 800 26px var(--font-display); color: var(--text-primary); } .pgstat span { font-size: 11px; color: var(--text-muted); }
+.pgbars { grid-column: 1 / -1; display: grid; gap: 4px; } .pghead .btn.primary { grid-column: 1 / -1; justify-self: start; }
+.pgbar { position: relative; height: 8px; background: var(--bg-input); border-radius: 99px; overflow: hidden; } .pgbar i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; }
+.pgbar i + i { height: 4px; top: 2px; }
+.road { position: relative; margin-top: 10px; background: radial-gradient(500px 220px at 50% 0, rgba(255,255,255,.035), transparent 70%), var(--bg-lane); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
+.road svg { position: absolute; inset: 0; }
+.road .rd0 { fill: none; stroke: #232323; stroke-width: 30; stroke-linecap: round; filter: drop-shadow(0 0 1px #000); }
+.road .rdc { fill: none; stroke: #3A3A3A; stroke-width: 2; stroke-dasharray: 2 12; stroke-linecap: round; }
+.road .rd1 { fill: none; stroke-width: 12; stroke-linecap: round; opacity: .95; }
+.road .pin path.pk, .road .pk { fill: none; stroke: #0A0A0A; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; } .road .pks { fill: #0A0A0A; stroke: none; }
+.road .pin { stroke: var(--border-strong); stroke-width: 1.5; } .road .pin.ok { stroke: #0A0A0A; } .road .pin.bad { stroke: #0A0A0A; } .road .pin.now { stroke: #fff; }
+.road .pin:not(.ok):not(.bad):not(.now) .pks { fill: var(--text-muted); }
+.me0 { opacity: .35; } .me1 { fill: #fff; } #rdMe { filter: drop-shadow(0 0 6px rgba(255,255,255,.5)); }
+.rnode { position: absolute; padding: 8px 12px; max-width: 340px; display: grid; gap: 2px; align-content: start; font-size: 12px; color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+.road .rnode { width: fit-content; }
+.rnode[data-task] { cursor: pointer; } .rnode b { color: var(--text-primary); font-size: 13px; line-height: 1.25; }
+.rnode small { color: var(--text-muted); font-size: 11px; } .rnode.ok { border-color: rgba(127,184,154,.5); } .rnode.bad { border-color: rgba(229,72,77,.6); } .rnode.bad small { color: var(--color-error); }
+.rnode.inicio, .rnode.meta { background: transparent; border-style: dashed; }
+.rnode img { width: 100%; max-height: 140px; object-fit: cover; border-radius: 6px; margin-top: 4px; }
+.rnode a { color: var(--color-link); } .pgdel, .pgmod { justify-self: start; font: inherit; font-size: 11px; color: var(--text-secondary); background: none; border: 1px solid var(--border-default); border-radius: 99px; padding: 2px 10px; cursor: pointer; margin-top: 4px; }
+.pgmod:hover, .pgdel:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.mpct { display: block; height: 5px; background: var(--bg-input); border-radius: 99px; overflow: hidden; margin: 4px 0; } .mpct i { display: block; height: 100%; background: var(--color-ok); }
+@media (max-width: 640px) { .pghead { grid-template-columns: 1fr; } .pgstat { justify-content: space-between; } .rnode { max-width: none; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -470,6 +515,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       <div class="seg2" role="group" aria-label="Vista" id="viewSwitch">
         <button type="button" data-view="board" aria-pressed="true">Tablero</button>
         <button type="button" data-view="cal" aria-pressed="false">Calendario</button>
+        <button type="button" data-view="prog" aria-pressed="false">Progreso</button>
       </div>
       <div class="seg2" role="group" aria-label="Cambiar entre escuela y personal" id="scopeSwitch">
         <button type="button" data-ambito="Desarrollo profesional" aria-pressed="true"><span class="long">Desarrollo profesional</span><span class="short">DP</span> <small id="cntDP"></small></button>
@@ -497,6 +543,17 @@ details.mats > summary:hover { background: var(--bg-surface); }
       </div>
     </div>
     <main class="board" id="board"></main>
+  </section>
+
+  <!-- vista progreso -->
+  <section id="progView" style="display:grid;gap:14px;" hidden>
+    <div class="pgbar2">
+      <div class="seg2" id="pgGrupos" role="group" aria-label="Tipo de camino"></div>
+      <select class="pgselect" id="pgSel" aria-label="Elegir un camino"></select>
+    </div>
+    <div class="pgbanner" id="pgCorteBanner" hidden><span>🌟 Hoy es domingo de corte: sube una captura o un link con lo que avanzaste.</span><button class="btn primary" id="pgCorteHoy" type="button">Hacer corte</button></div>
+    <div class="pggrid" id="pgOver"></div>
+    <div id="pgDetail" hidden></div>
   </section>
 
   <!-- vista calendario -->
@@ -634,6 +691,19 @@ details.mats > summary:hover { background: var(--bg-surface); }
         <button class="btn primary" id="btnSave" type="submit">Guardar</button>
       </div>
     </div>
+  </form>
+</dialog>
+
+<dialog id="dlgCorte">
+  <form method="dialog" id="frmCorte">
+    <h2>Corte de progreso</h2>
+    <div class="f"><label for="coCamino">Camino</label><select id="coCamino"></select></div>
+    <div class="f"><label for="coFecha">Fecha</label><input id="coFecha" type="date"></div>
+    <div class="f"><label for="coNota">¿Qué avanzaste?</label><textarea id="coNota" rows="3" maxlength="1000" placeholder="Terminé el módulo 2…"></textarea></div>
+    <div class="f"><label for="coLink">Link de evidencia <span class="opt">(opcional)</span></label><input id="coLink" type="url" placeholder="https://…"></div>
+    <div class="f"><label for="coFile">Captura de pantalla <span class="opt">(opcional)</span></label><input id="coFile" type="file" accept="image/*"><img id="coPrev" alt="Vista previa" hidden style="max-width:100%;border-radius:8px;margin-top:8px"></div>
+    <p class="stamp" id="coErr" role="status"></p>
+    <div class="dlg-actions"><button class="btn ghost" type="button" id="coCancel">Cancelar</button><div class="right"><button class="btn primary" type="submit">Guardar corte</button></div></div>
   </form>
 </dialog>
 
@@ -792,10 +862,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
       { etiqueta: "Repo ProgramacionLCD", enlace: "https://github.com/", notas: "Ejemplo", ambito: DP, categoria: "Programación para Ciencia de Datos" },
       { etiqueta: "Citas IMSS digital", enlace: "https://www.imss.gob.mx/", notas: "", ambito: "Personal", categoria: "IMSS" }
     ];
-    var _hechos = [];
+    var _hechos = [], _cortes = [];
+    var _temario = [["Fundamentos de UX", 8, 3], ["Investigación de usuarios", 10, 12], ["Wireframes y prototipos", 12, 22], ["Diseño visual", 10, 32], ["Proyecto final", 15, 48]].map(function (m) {
+      return { camino: "DP-002", bloque: "Bloque 1", modulo: m[0], lecciones: m[1], fecha: ymd(m[2] - 14), hecho: m[2] < 8, notas: "" }; });
+    var _caminos = [{ id: "CAM-MED", titulo: "Medicina", tipo: "hábito", actividad: "Medicamento", desde: ymd(-40), hasta: ymd(240), meta: "Estudio molecular", metaFecha: ymd(240), color: "#B79CC9", notas: "" }];
     function board() { return { ok: true, tasks: JSON.parse(JSON.stringify(tasks)), team: [{ nombre: "Irvin", color: "#E5E5E5" }],
       recursos: recursos.slice(), ambitos: AMBITOS_DEFAULT, horario: horario, plan: plan, calendario: calendario, fijas: fijas,
-      hechos: _hechos.slice(), miWhatsapp: "", serverTime: stamp() }; }
+      hechos: _hechos.slice(), cortes: _cortes.slice(), temario: JSON.parse(JSON.stringify(_temario)), caminos: _caminos.slice(), miWhatsapp: "", serverTime: stamp() }; }
     function wait(v) { return new Promise(function (r) { setTimeout(function () { r(v); }, 150); }); }
     return {
       getBoard: function () { return wait(board()); },
@@ -819,7 +892,14 @@ details.mats > summary:hover { background: var(--bg-surface); }
         _hechos = _hechos.filter(function (h) { return !(h.clave === clave && h.fecha === fecha); });
         if (done) _hechos.push({ clave: clave, fecha: fecha, marcado: new Date().toISOString() });
         return wait(board());
-      }
+      },
+      saveCorte: function (c) {
+        if (!c.nota && !c.link && !c.imagen) return Promise.reject(new Error("Agrega una nota, un link o una captura."));
+        _cortes.push({ id: "COR-" + pad(_cortes.length + 1).padStart(3, "0"), camino: c.camino, fecha: c.fecha, nota: c.nota, link: c.link, imagen: c.imagen || "", creado: stamp() });
+        return wait(board());
+      },
+      deleteCorte: function (id) { _cortes = _cortes.filter(function (x) { return x.id !== id; }); return wait(board()); },
+      toggleModulo: function (camino, modulo, done) { _temario.forEach(function (m) { if (m.camino === camino && m.modulo === modulo) m.hecho = !!done; }); return wait(board()); }
     };
   })();
 
@@ -828,18 +908,21 @@ details.mats > summary:hover { background: var(--bg-surface); }
     saveTask: function (t, u) { return MODE === "demo" ? demo.saveTask(t, u) : apiFetch("POST", { action: "save", task: t, user: u }); },
     moveTask: function (id, e, u) { return MODE === "demo" ? demo.moveTask(id, e, u) : apiFetch("POST", { action: "move", id: id, estado: e, user: u }); },
     deleteTask: function (id, u) { return MODE === "demo" ? demo.deleteTask(id, u) : apiFetch("POST", { action: "delete", id: id, user: u }); },
-    toggleHecho: function (clave, fecha, done) { return MODE === "demo" ? demo.toggleHecho(clave, fecha, done) : apiFetch("POST", { action: "hecho", clave: clave, fecha: fecha, done: done }); }
+    toggleHecho: function (clave, fecha, done) { return MODE === "demo" ? demo.toggleHecho(clave, fecha, done) : apiFetch("POST", { action: "hecho", clave: clave, fecha: fecha, done: done }); },
+    saveCorte: function (c) { return MODE === "demo" ? demo.saveCorte(c) : apiFetch("POST", { action: "corte", corte: c }); },
+    deleteCorte: function (id) { return MODE === "demo" ? demo.deleteCorte(id) : apiFetch("POST", { action: "corteDel", id: id }); },
+    toggleModulo: function (camino, modulo, done) { return MODE === "demo" ? demo.toggleModulo(camino, modulo, done) : apiFetch("POST", { action: "modulo", camino: camino, modulo: modulo, done: done }); }
   };
 
   /* ------------ estado ------------ */
-  var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], fijas: [], hechos: [], hechosSet: {},
+  var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], fijas: [], hechos: [], hechosSet: {}, cortes: [], caminos: [], temario: [],
                 ambitos: AMBITOS_DEFAULT, miWhatsapp: "",
                 ambito: DP, f: { cat: "", tipo: "", inst: "", prio: "" }, q: "", openPop: "",
                 view: "board", calMode: "week", calDate: today0(), busy: 0, dragging: false };
   var $ = function (id) { return document.getElementById(id); };
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   state.ambito = store("irvin.ambito") === "Personal" ? "Personal" : DP;
-  state.view = store("irvin.view") === "cal" ? "cal" : "board";
+  state.view = ["cal", "prog"].indexOf(store("irvin.view")) > -1 ? store("irvin.view") : "board";
   state.calMode = store("irvin.calMode") || (window.innerWidth < 700 ? "day" : "week");
   if (["month", "week", "day"].indexOf(state.calMode) === -1) state.calMode = "week";
   accessCode = store("irvin.code") || "";
@@ -874,6 +957,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
     state.hechos = res.hechos || [];
     state.hechosSet = {};
     state.hechos.forEach(function (h) { state.hechosSet[h.clave + "|" + h.fecha] = true; });
+    state.cortes = res.cortes || [];
+    state.caminos = res.caminos || [];
+    state.temario = res.temario || [];
     state.miWhatsapp = res.miWhatsapp || "";
     setSync("", (MODE === "live" ? "Sincronizado · " : "Modo demo · ") + (res.serverTime || "").slice(11));
     render();
@@ -943,11 +1029,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
     renderHeader();
     $("boardView").hidden = state.view !== "board";
     $("calView").hidden = state.view !== "cal";
+    $("progView").hidden = state.view !== "prog";
     $("scopeSwitch").hidden = state.view !== "board";
     $("progress").hidden = state.view !== "board";
     Array.prototype.forEach.call($("viewSwitch").querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === state.view)); });
     $("t_responsable").innerHTML = state.team.map(function (p) { return "<option>" + esc(p.nombre) + "</option>"; }).join("");
-    if (state.view === "board") { renderFilters(); renderBoard(); } else renderCal();
+    if (state.view === "board") { renderFilters(); renderBoard(); } else if (state.view === "prog") renderProg(); else renderCal();
   }
 
   function renderHeader() {
@@ -1823,6 +1910,263 @@ details.mats > summary:hover { background: var(--bg-surface); }
     }
     dlgRecursos.showModal();
   });
+
+  /* ------------ Progreso: caminos ------------ */
+  var PG_GRUPOS = [["", "Todos"], ["Semestre", "Semestre"], ["Materia", "Materias"], ["Curso", "Cursos y certificaciones"], ["Hábito", "Hábitos"], ["Pago", "Pagos"]];
+  var SCHOOL_TIPOS = /examen|tarea|pr[aá]ctica/i;
+  function pctOf(n, d) { return d > 0 ? Math.max(0, Math.min(100, Math.round(n * 100 / d))) : 0; }
+  function spanPct(desde, hasta) {
+    var a = parseYMD(desde), b = parseYMD(hasta), t = today0();
+    if (!a || !b || b <= a) return t >= (b || a) ? 100 : 0;
+    return Math.max(0, Math.min(100, Math.round((t - a) * 100 / (b - a))));
+  }
+  function fmtCorto(ymd) { var d = parseYMD(ymd); return d ? d.getDate() + " " + MESES[d.getMonth()] + (d.getFullYear() !== today0().getFullYear() ? " " + String(d.getFullYear()).slice(2) : "") : ""; }
+  function isSchoolTask(t) { return t.ambito === DP && (instList(t).indexOf("ESCOM") > -1); }
+  function taskHito(t) {
+    var ymd = t.fecha || t.inicio, tdy = ymdOf(today0());
+    var done = t.estado === "Done";
+    return { ymd: ymd, label: t.titulo, sub: [t.tipo, t.categoria].filter(Boolean).join(" · "), kind: /examen/i.test(t.tipo) ? "examen" : "tarea", done: done,
+             miss: !done && ymd < tdy, task: t.id };
+  }
+  function cortesHitos(id) {
+    return state.cortes.filter(function (c) { return c.camino === id; }).map(function (c) {
+      return { ymd: c.fecha, label: c.nota || "Corte", sub: "Corte semanal", kind: "corte", done: true, corte: c };
+    });
+  }
+  /** Cuenta ocurrencias de una actividad fija entre dos fechas (hasta hoy) y cuántas marcaste. */
+  function habitoCuenta(actividad, desde, hasta) {
+    var tdy = ymdOf(today0()), fin = hasta < tdy ? hasta : tdy, fs = state.fijas.filter(function (f) { return norm(f.actividad) === norm(actividad); });
+    var total = 0, done = 0, dias = [];
+    for (var d = desde; d <= fin; d = ymdOf(addDays(parseYMD(d), 1))) {
+      var dow = parseYMD(d).getDay();
+      fs.forEach(function (f) {
+        if (!fijaToday(f, d, dow)) return;
+        if (/^clase$/i.test(f.tipo) && !hasClasses(d)) return;
+        total++; if (hecho(claveFija(f), d)) done++;
+      });
+    }
+    return { total: total, done: done };
+  }
+  function buildCaminos() {
+    var out = [], tdy = ymdOf(today0());
+    var dp = state.tasks.filter(function (t) { return t.ambito === DP; });
+    // Semestre y materias
+    var per = state.calendario.filter(function (e) { return /^clases$/i.test(e.tipo); });
+    var sd = per.length ? per.map(function (e) { return e.inicio; }).sort()[0] : "", sh = per.length ? per.map(function (e) { return e.fin || e.inicio; }).sort().pop() : "";
+    var escuela = dp.filter(function (t) { return isSchoolTask(t) && (t.fecha || t.inicio); });
+    if (sd && sh) {
+      var hs = escuela.filter(function (t) { return SCHOOL_TIPOS.test(t.tipo || "") || t.fecha; }).map(taskHito);
+      state.calendario.forEach(function (e) {
+        if (/^clases$/i.test(e.tipo) || e.inicio < sd || e.inicio > sh) return;
+        hs.push({ ymd: e.inicio, label: e.evento, sub: e.tipo, kind: /descanso|vacaci/i.test(e.tipo) ? "descanso" : "evento", done: e.inicio < tdy });
+      });
+      hs = hs.concat(cortesHitos("SEM"));
+      var tt = escuela.length, dn = escuela.filter(function (t) { return t.estado === "Done"; }).length;
+      out.push({ id: "SEM", grupo: "Semestre", titulo: "Semestre", sub: fmtCorto(sd) + " → " + fmtCorto(sh), color: "#9DB4CF", desde: sd, hasta: sh, hitos: hs,
+                 rec: spanPct(sd, sh), hecho: pctOf(dn, tt), detalle: dn + " de " + tt + " entregas hechas" });
+      var cats = {}; escuela.forEach(function (t) { if (t.categoria) (cats[t.categoria] = cats[t.categoria] || []).push(t); });
+      Object.keys(cats).forEach(function (c, i) {
+        var ts = cats[c], id = "MAT-" + c, h2 = ts.map(taskHito).concat(cortesHitos(id)), d2 = ts.filter(function (t) { return t.estado === "Done"; }).length;
+        out.push({ id: id, grupo: "Materia", titulo: c, sub: ts.length + (ts.length === 1 ? " asignación" : " asignaciones"), color: catColor(DP, c), desde: sd, hasta: sh, hitos: h2,
+                   rec: spanPct(sd, sh), hecho: pctOf(d2, ts.length), detalle: d2 + " de " + ts.length + " hechas" });
+      });
+    }
+    // Cursos / certificaciones: asignaciones con temario o con rango
+    dp.forEach(function (t) {
+      var mods = state.temario.filter(function (m) { return m.camino === t.id; });
+      if (!mods.length && !(t.inicio && t.fecha && !isSchoolTask(t))) return;
+      var fechas = mods.map(function (m) { return m.fecha; }).filter(Boolean).sort();
+      var desde = t.inicio || fechas[0] || tdy, hasta = t.fecha || fechas[fechas.length - 1] || desde;
+      var hs = mods.map(function (m) {
+        return { ymd: m.fecha || desde, label: m.modulo, sub: (m.bloque ? m.bloque + " · " : "") + (m.lecciones ? m.lecciones + " lecciones" : "Módulo"), kind: "modulo", done: m.hecho,
+                 miss: !m.hecho && m.fecha && m.fecha < tdy, modulo: m };
+      }).concat(cortesHitos(t.id));
+      var p = t.progreso || computeProgreso(t), hecho, det;
+      if (mods.length) {
+        var tot = mods.reduce(function (s, m) { return s + (m.lecciones || 1); }, 0), dn = mods.filter(function (m) { return m.hecho; }).reduce(function (s, m) { return s + (m.lecciones || 1); }, 0);
+        hecho = pctOf(dn, tot); det = mods.filter(function (m) { return m.hecho; }).length + " de " + mods.length + " módulos";
+      } else if (p && p.total) { hecho = pctOf(p.done, p.total); det = p.done + " de " + p.total + " sesiones"; }
+      else { hecho = t.estado === "Done" ? 100 : 0; det = t.estado === "Done" ? "Terminada" : "En curso"; }
+      if (t.estado === "Done") hecho = 100;
+      out.push({ id: t.id, grupo: "Curso", titulo: t.titulo, sub: [t.categoria, instList(t).join(" + ")].filter(Boolean).join(" · "), color: catColor(DP, t.categoria),
+                 desde: desde, hasta: hasta, hitos: hs, rec: spanPct(desde, hasta), hecho: hecho, detalle: det, task: t.id, meta: t.titulo });
+    });
+    // Hábitos y pagos (pestaña Caminos)
+    state.caminos.forEach(function (c) {
+      if (!c.desde || !c.hasta) return;
+      var hs = [], cnt = habitoCuenta(c.actividad, c.desde, c.hasta), det;
+      if (c.tipo === "pago") {
+        var fs = state.fijas.filter(function (f) { return norm(f.actividad) === norm(c.actividad); }), n = 0, dn = 0;
+        for (var d = c.desde; d <= c.hasta; d = ymdOf(addDays(parseYMD(d), 1))) {
+          fs.forEach(function (f) {
+            if (!fijaToday(f, d, parseYMD(d).getDay())) return;
+            n++; var ok = hecho(claveFija(f), d); if (ok) dn++;
+            hs.push({ ymd: d, label: "Pago " + n, sub: f.actividad, kind: "pago", done: ok, miss: !ok && d < tdy });
+          });
+        }
+        cnt = { total: n, done: dn }; det = dn + " de " + n + " pagos";
+      } else {
+        for (var m0 = parseYMD(c.desde.slice(0, 8) + "01"); ymdOf(m0) <= c.hasta; m0 = new Date(m0.getFullYear(), m0.getMonth() + 1, 1)) {
+          var ini = ymdOf(m0) < c.desde ? c.desde : ymdOf(m0), fin = ymdOf(new Date(m0.getFullYear(), m0.getMonth() + 1, 0)); if (fin > c.hasta) fin = c.hasta;
+          var k = habitoCuenta(c.actividad, ini, fin), fut = ini > tdy;
+          hs.push({ ymd: fin, label: MESES_L[m0.getMonth()].replace(/^./, function (x) { return x.toUpperCase(); }), kind: "mes", done: !fut && k.total > 0 && k.done === k.total,
+                    miss: !fut && fin < tdy && k.done < k.total, pctMes: fut ? null : pctOf(k.done, k.total), sub: fut ? "Por venir" : k.done + " de " + k.total + " días" });
+        }
+        det = cnt.done + " de " + cnt.total + " días cumplidos";
+      }
+      hs = hs.concat(cortesHitos(c.id));
+      var totalPrev = cnt.total;
+      out.push({ id: c.id, grupo: c.tipo === "pago" ? "Pago" : "Hábito", titulo: c.titulo, sub: c.meta ? "Meta: " + c.meta + (c.metaFecha ? " · " + fmtCorto(c.metaFecha) : "") : c.desde + " → " + c.hasta,
+                 color: c.color || "#B4B4B4", desde: c.desde, hasta: c.metaFecha && c.metaFecha > c.hasta ? c.metaFecha : c.hasta, hitos: hs, rec: spanPct(c.desde, c.hasta),
+                 hecho: c.tipo === "pago" ? pctOf(cnt.done, cnt.total) : pctOf(cnt.done, cnt.total), detalle: det, meta: c.meta, notas: c.notas });
+    });
+    return out;
+  }
+
+  /* ------------ Progreso: pantalla ------------ */
+  state.pg = { grupo: "", sel: "" };
+  function pgFiltrados(all) { return all.filter(function (c) { return !state.pg.grupo || c.grupo === state.pg.grupo; }); }
+  function miniRoad(c) {
+    var w = 300, h = 26, x0 = 8, x1 = w - 8, xt = x0 + (x1 - x0) * c.rec / 100;
+    var span = (parseYMD(c.hasta) - parseYMD(c.desde)) || 1, dots = c.hitos.filter(function (hh) { return hh.kind !== "corte"; }).slice(0, 80).map(function (hh) {
+      var f = Math.max(0, Math.min(1, (parseYMD(hh.ymd) - parseYMD(c.desde)) / span)), x = x0 + (x1 - x0) * f;
+      return '<circle cx="' + x.toFixed(1) + '" cy="13" r="3.4" class="md ' + (hh.done ? "ok" : hh.miss ? "bad" : "") + '"/>';
+    }).join("");
+    return '<svg class="mini" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="M' + x0 + " 13 H" + x1 + '" class="mr0"/><path d="M' + x0 + " 13 H" + xt.toFixed(1) + '" class="mr1" style="stroke:' + c.color + '"/>' + dots +
+      '<circle cx="' + xt.toFixed(1) + '" cy="13" r="5.5" class="mv" style="fill:' + c.color + '"/></svg>';
+  }
+  function pgCard(c) {
+    return '<button type="button" class="pgcard" data-pg="' + esc(c.id) + '" style="--c:' + c.color + '"><span class="pgg">' + esc(c.grupo) + '</span><b>' + esc(c.titulo) + '</b><small>' + esc(c.sub) + "</small>" + miniRoad(c) +
+      '<span class="pgnums"><span><b>' + c.rec + '%</b> recorrido</span><span><b>' + c.hecho + '%</b> hecho</span></span><small>' + esc(c.detalle) + "</small></button>";
+  }
+  function renderProg() {
+    var all = buildCaminos(), sel = all.filter(function (c) { return c.id === state.pg.sel; })[0];
+    if (!sel) state.pg.sel = "";
+    var list = pgFiltrados(all);
+    $("pgGrupos").innerHTML = PG_GRUPOS.map(function (g) { return '<button type="button" data-g="' + g[0] + '" aria-pressed="' + (state.pg.grupo === g[0]) + '">' + g[1] + "</button>"; }).join("");
+    var opts = '<option value="">Ver todos los caminos</option>' + list.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === state.pg.sel ? " selected" : "") + ">" + esc(c.titulo) + "</option>"; }).join("");
+    $("pgSel").innerHTML = opts;
+    var sunday = today0().getDay() === 0, hoyCorte = state.cortes.some(function (c) { return c.fecha === ymdOf(today0()); });
+    $("pgCorteBanner").hidden = !(sunday && !hoyCorte);
+    $("pgOver").hidden = !!sel; $("pgDetail").hidden = !sel;
+    if (!sel) {
+      var total = list.length;
+      $("pgOver").innerHTML = total ? list.map(pgCard).join("") : '<p class="pgempty">Todavía no hay caminos en este filtro.</p>';
+    } else renderRoad(sel);
+  }
+  function pinSVG(kind, st, color) {
+    var fill = st === "ok" ? "var(--color-ok)" : st === "bad" ? "var(--color-error)" : st === "now" ? color : "var(--bg-surface-2)";
+    var glyph = st === "ok" ? '<path d="M-4 -17 l3 3 l6 -6" class="pk"/>' : kind === "corte" ? '<path d="M0 -21 l1.8 3.8 4.1.5 -3 2.9.8 4.1 -3.7-2 -3.7 2 .8-4.1 -3-2.9 4.1-.5z" class="pks"/>' : kind === "meta" ? '<path d="M-3 -10 v-12 M-3 -22 h9 l-2 3.5 2 3.5 h-9" class="pk"/>' : st === "bad" ? '<path d="M0 -21 v6 M0 -11.5 v.5" class="pk"/>' : '<circle cx="0" cy="-17" r="3" class="pks"/>';
+    return '<g class="pin ' + st + '"><path d="M0 0 C-10 -12 -15 -18 -15 -24 A15 15 0 1 1 15 -24 C15 -18 10 -12 0 0z" style="fill:' + fill + '"/>' + glyph + "</g>";
+  }
+  function renderRoad(c) {
+    var wrap = $("pgDetail"), W = Math.max(320, wrap.clientWidth || 360), narrow = W < 640, tdy = ymdOf(today0());
+    var nodes = [{ ymd: c.desde, label: "Inicio", sub: fmtCorto(c.desde), kind: "inicio", done: c.desde <= tdy }]
+      .concat(c.hitos.slice().sort(function (a, b) { return a.ymd < b.ymd ? -1 : a.ymd > b.ymd ? 1 : 0; }))
+      .concat([{ ymd: c.hasta, label: c.meta || "Meta", sub: fmtCorto(c.hasta), kind: "meta", done: c.hasta <= tdy && c.hecho >= 100 }]);
+    var gap = 112, top = 50, H = top + (nodes.length - 1) * gap + 80, cx = narrow ? 34 : W / 2, amp = narrow ? 10 : 34, pts = nodes.map(function (n, i) {
+      return { x: cx + (i % 2 ? amp : -amp) * (i === 0 || i === nodes.length - 1 ? 0 : 1), y: top + i * gap };
+    });
+    var d = "M" + pts[0].x + " " + pts[0].y;
+    for (var i = 1; i < pts.length; i++) { var a = pts[i - 1], b = pts[i], m = (a.y + b.y) / 2; d += " C" + a.x + " " + m + " " + b.x + " " + m + " " + b.x + " " + b.y; }
+    // posición del viajero: entre el último nodo pasado y el siguiente
+    var ti = 0, tf = 0;
+    for (var j = 0; j < nodes.length - 1; j++) {
+      if (nodes[j].ymd <= tdy) { ti = j; var s = parseYMD(nodes[j].ymd), e = parseYMD(nodes[j + 1].ymd); tf = tdy >= nodes[j + 1].ymd ? 1 : Math.max(0, Math.min(1, (today0() - s) / ((e - s) || 1))); }
+    }
+    if (nodes[0].ymd > tdy) { ti = 0; tf = 0; }
+    var frac = Math.min(1, (ti + tf) / (nodes.length - 1));
+    var html = '<div class="road" style="height:' + H + 'px"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Camino de ' + esc(c.titulo) + '">' +
+      '<path id="rdBase" d="' + d + '" class="rd0"/><path id="rdDone" d="' + d + '" class="rd1" style="stroke:' + c.color + '"/><path d="' + d + '" class="rdc"/>';
+    nodes.forEach(function (n, i) {
+      var st = n.done ? "ok" : n.miss ? "bad" : (i === ti + 1 ? "now" : "");
+      html += '<g transform="translate(' + pts[i].x + " " + pts[i].y + ')">' + pinSVG(n.kind, st, c.color) + "</g>";
+    });
+    html += '<g id="rdMe"><circle r="9" class="me0" style="fill:' + c.color + '"/><circle r="4" class="me1"/></g></svg>';
+    nodes.forEach(function (n, i) {
+      var left = narrow ? false : (i % 2 === 1 && i !== nodes.length - 1), x = pts[i].x, st = n.done ? "ok" : n.miss ? "bad" : "";
+      var style = narrow ? "left:" + (cx + 34) + "px;right:0;top:" + (pts[i].y - 38) + "px" : (left ? "right:" + (W - x + 36) + "px;text-align:right" : "left:" + (x + 36) + "px") + ";top:" + (pts[i].y - 38) + "px";
+      var body = '<small>' + esc(n.kind === "inicio" ? "Inicio" : n.kind === "meta" ? "Meta" : fmtCorto(n.ymd)) + (n.sub && n.kind !== "inicio" && n.kind !== "meta" ? " · " + esc(n.sub) : "") + "</small><b>" + esc(n.label) + "</b>";
+      if (n.pctMes != null) body += '<span class="mpct"><i style="width:' + n.pctMes + '%"></i></span><small>' + n.pctMes + "% de cumplimiento</small>";
+      var acts = "";
+      if (n.task) acts = ' data-task="' + esc(n.task) + '"';
+      if (n.modulo) acts += ' data-mod="' + esc(n.modulo.modulo) + '"';
+      if (n.corte) {
+        var cc = n.corte, img = cc.imagen ? (/^data:/.test(cc.imagen) ? cc.imagen : "https://drive.google.com/thumbnail?id=" + encodeURIComponent(cc.imagen) + "&sz=w800") : "";
+        body = "<small>" + esc(fmtCorto(cc.fecha)) + " · Corte semanal</small><b>" + esc(cc.nota || "Corte") + "</b>" +
+          (cc.link ? '<a href="' + esc(cc.link) + '" target="_blank" rel="noopener noreferrer">Ver link</a>' : "") +
+          (img ? '<a href="' + (/^data:/.test(img) ? "#" : "https://drive.google.com/file/d/" + encodeURIComponent(cc.imagen) + "/view") + '" target="_blank" rel="noopener noreferrer"><img loading="lazy" src="' + esc(img) + '" alt="Evidencia del corte"></a>' : "") +
+          '<button type="button" class="pgdel" data-delcorte="' + esc(cc.id) + '">Borrar corte</button>';
+      }
+      html += '<div class="rnode ' + n.kind + " " + st + (n.corte ? " corte" : "") + '" style="' + style + '"' + acts + ">" + body +
+        (n.modulo ? '<button type="button" class="pgmod" data-mod="' + esc(n.modulo.modulo) + '">' + (n.done ? "Desmarcar" : "Marcar como hecho") + "</button>" : "") + "</div>";
+    });
+    html += "</div>";
+    var head = '<div class="pghead" style="--c:' + c.color + '"><button class="btn ghost" id="pgBack" type="button">← Todos</button><div><span class="pgg">' + esc(c.grupo) + "</span><h2>" + esc(c.titulo) + "</h2><small>" + esc(c.sub) + "</small></div>" +
+      '<div class="pgstat"><div><b>' + c.rec + '%</b><span>recorrido</span></div><div><b>' + c.hecho + '%</b><span>hecho</span></div></div>' +
+      '<div class="pgbars"><div class="pgbar"><i style="width:' + c.rec + '%;background:var(--silver-dim);box-shadow:inset 0 0 0 1px var(--border-strong)"></i><i style="width:' + c.hecho + '%;background:' + c.color + '"></i></div><small>' + esc(c.detalle) + '</small></div>' +
+      '<button class="btn primary" id="pgAddCorte" type="button" data-camino="' + esc(c.id) + '">+ Agregar corte</button></div>';
+    wrap.innerHTML = head + html;
+    var base = $("rdBase"), len = base.getTotalLength(), dn = $("rdDone");
+    dn.style.strokeDasharray = (len * frac) + " " + (len + 10);
+    var p = base.getPointAtLength(len * frac); $("rdMe").setAttribute("transform", "translate(" + p.x + " " + p.y + ")");
+    var meEl = $("rdMe"); if (meEl && meEl.scrollIntoView && !renderRoad._done) { renderRoad._done = true; }
+  }
+  /* Corte con evidencia */
+  function resizeImage(file, max) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onerror = function () { rej(new Error("No pude leer la imagen.")); };
+      fr.onload = function () {
+        var im = new Image();
+        im.onerror = function () { rej(new Error("Esa imagen no se puede abrir.")); };
+        im.onload = function () {
+          var k = Math.min(1, max / Math.max(im.width, im.height)), cv = document.createElement("canvas");
+          cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+          res(cv.toDataURL("image/jpeg", 0.78));
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  var corteImg = "";
+  function openCorte(caminoId) {
+    var all = buildCaminos();
+    $("coCamino").innerHTML = all.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === caminoId ? " selected" : "") + ">" + esc(c.titulo) + "</option>"; }).join("");
+    $("coFecha").value = ymdOf(today0()); $("coNota").value = ""; $("coLink").value = ""; $("coFile").value = ""; $("coPrev").hidden = true; corteImg = ""; $("coErr").textContent = "";
+    $("dlgCorte").showModal();
+  }
+  $("coFile").addEventListener("change", function () {
+    var f = this.files[0]; if (!f) { corteImg = ""; $("coPrev").hidden = true; return; }
+    $("coErr").textContent = "Preparando imagen…";
+    resizeImage(f, 1280).then(function (u) { corteImg = u; $("coPrev").src = u; $("coPrev").hidden = false; $("coErr").textContent = ""; }).catch(function (e) { corteImg = ""; $("coErr").textContent = e.message; });
+  });
+  $("frmCorte").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var c = { camino: $("coCamino").value, fecha: $("coFecha").value, nota: $("coNota").value.trim(), link: $("coLink").value.trim(), imagen: corteImg };
+    if (!c.nota && !c.link && !c.imagen) { $("coErr").textContent = "Agrega una nota, un link o una captura."; return; }
+    $("dlgCorte").close(); run(api.saveCorte(c), "Corte guardado. ¡Mira cómo vas!");
+  });
+  $("coCancel").addEventListener("click", function () { $("dlgCorte").close(); });
+  var pgv = $("progView");
+  pgv.addEventListener("click", function (ev) {
+    var t = ev.target;
+    var g = t.closest("[data-g]"); if (g) { state.pg.grupo = g.dataset.g; state.pg.sel = ""; return renderProg(); }
+    var card = t.closest("[data-pg]"); if (card) { state.pg.sel = card.dataset.pg; renderProg(); window.scrollTo(0, 0); return; }
+    if (t.closest("#pgBack")) { state.pg.sel = ""; return renderProg(); }
+    var ac = t.closest("#pgAddCorte"); if (ac) return openCorte(ac.dataset.camino);
+    if (t.closest("#pgCorteHoy")) return openCorte(state.pg.sel || "");
+    var dc = t.closest("[data-delcorte]"); if (dc) { if (confirm("¿Borrar este corte?")) run(api.deleteCorte(dc.dataset.delcorte), "Corte borrado"); return; }
+    var mb = t.closest(".pgmod"); if (mb) {
+      var m = state.temario.filter(function (x) { return x.camino === state.pg.sel && x.modulo === mb.dataset.mod; })[0];
+      if (m) run(api.toggleModulo(m.camino, m.modulo, !m.hecho)); return;
+    }
+    var tk = t.closest("a") ? null : t.closest("[data-task]"); if (tk && taskById(tk.dataset.task)) openForm(taskById(tk.dataset.task));
+  });
+  $("pgSel").addEventListener("change", function () { state.pg.sel = this.value; renderProg(); });
+  var pgResize; window.addEventListener("resize", function () { clearTimeout(pgResize); pgResize = setTimeout(function () { if (state.view === "prog" && state.pg.sel) renderProg(); }, 200); });
 
   /* ------------ eventos ------------ */
   function setAmbito(a) { state.ambito = a; state.f = { cat: "", tipo: "", inst: "", prio: "" }; state.openPop = ""; store("irvin.ambito", a); render(); }
