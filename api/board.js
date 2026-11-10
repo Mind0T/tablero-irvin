@@ -6,7 +6,7 @@
 
 import crypto from "node:crypto";
 
-const ACTIONS = new Set(["save", "move", "delete"]);
+const ACTIONS = new Set(["save", "move", "delete", "hecho", "corte", "corteDel", "modulo"]);
 
 function sameText(a, b) {
   const ha = crypto.createHash("sha256").update(String(a)).digest();
@@ -40,7 +40,12 @@ export default async function handler(req, res) {
       let body;
       try { body = readBody(req); } catch { return res.status(400).json({ ok: false, error: "El cuerpo no es JSON válido." }); }
       if (!ACTIONS.has(body.action)) return res.status(400).json({ ok: false, error: "Acción no válida." });
-      const payload = { action: body.action, id: body.id, estado: body.estado, task: body.task, user: body.user, secret: API_SECRET };
+      const payload = {
+        action: body.action, id: body.id, estado: body.estado, task: body.task, user: body.user, secret: API_SECRET,
+        clave: body.clave, fecha: body.fecha, done: body.done,              // hecho (marcar una ocurrencia)
+        corte: body.corte,                                                   // corte con evidencia (nota, link, imagen)
+        camino: body.camino, modulo: body.modulo,                            // modulo del temario
+      };
       upstream = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },

@@ -266,8 +266,11 @@ h1 { margin: 0; font: 800 clamp(26px, 4vw, 40px)/1 var(--font-display); color: v
 .ev.done::after { content: "✓"; position: absolute; top: 2px; right: 4px; color: #5FD03A; font: 700 12px var(--font-body); }
 .ev.miss::after { content: ""; position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 99px; background: var(--p-urg); box-shadow: 0 0 0 1.5px #0A0A0A; }
 .ev.miss { opacity: .88; }
-.mk.done button::before { content: "✓ "; color: #0A0A0A; }
-.mk.miss button { outline: 2px solid var(--p-urg); outline-offset: 1px; }
+.mk.done button, .mk.miss button { padding-left: 20px; }
+.mk.done button::before, .mk.miss button::before { content: ""; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 9px; height: 9px; border-radius: 99px; }
+.mk.done button::before { background: #0A0A0A; box-shadow: 0 0 0 1.5px rgba(255,255,255,.9); }
+.mk.done button::after { content: "✓"; position: absolute; left: 7.5px; top: 50%; transform: translateY(-52%); color: #fff; font: 700 8px/1 var(--font-body); }
+.mk.miss button::before { background: var(--p-urg); box-shadow: 0 0 0 1.5px #fff; }
 .pastdim { position: absolute; left: 0; right: 0; top: 0; background: rgba(0,0,0,.42); z-index: 1; pointer-events: none;
   background-image: linear-gradient(to bottom, rgba(10,10,10,.28), rgba(10,10,10,.5)); }
 .pill.done { color: #5FD03A; border-color: rgba(95,208,58,.5); background: rgba(95,208,58,.08); }

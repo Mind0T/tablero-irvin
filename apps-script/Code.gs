@@ -33,6 +33,9 @@ const SHEET_PLAN = 'Plan';
 const SHEET_CAL_IPN = 'Calendario IPN';
 const SHEET_FIJAS = 'Fijas';
 const SHEET_HECHOS = 'Hechos';
+const SHEET_CORTES = 'Cortes';
+const SHEET_CAMINOS = 'Caminos';
+const SHEET_TEMARIO = 'Temario';
 const TZ = 'America/Mexico_City';
 
 /* ================== CATEGORÍAS (edítalas aquí si cambian) ================== */
@@ -115,6 +118,9 @@ function crearHoja() {
   ensureSheet_(ss, SHEET_FIJAS, ['Actividad', 'Tipo', 'Días', 'Día del mes', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Excepto', 'Lugar', 'Notas', 'Aviso (min antes)']);
   ensureSheet_(ss, SHEET_CAL_IPN, ['Evento', 'Inicio', 'Fin', 'Tipo', 'Notas']);
   ensureSheet_(ss, SHEET_HECHOS, ['Clave', 'Fecha', 'Marcado en']);
+  ensureSheet_(ss, SHEET_CORTES, CORTES_HEADERS);
+  ensureSheet_(ss, SHEET_CAMINOS, ['ID', 'Título', 'Tipo', 'Actividad (Fijas)', 'Desde', 'Hasta', 'Meta', 'Meta fecha', 'Color', 'Notas']);
+  ensureSheet_(ss, SHEET_TEMARIO, ['Camino', 'Bloque', 'Módulo', 'Lecciones', 'Fecha meta', 'Hecho', 'Notas']);
 
   // Menús desplegables en la hoja (por si editas directo ahí)
   const cols = colMap_(tareas);
@@ -165,6 +171,9 @@ function doPost(e) {
       case 'move':   return moveTask_(body.id, body.estado, body.user);
       case 'delete': return deleteTask_(body.id, body.user);
       case 'hecho':  return toggleHecho_(body.clave, body.fecha, body.done);
+      case 'corte':  return saveCorte_(body.corte);
+      case 'corteDel': return deleteCorte_(body.id);
+      case 'modulo': return toggleModulo_(body.camino, body.modulo, body.done);
       default: throw new Error('Acción no válida: ' + body.action);
     }
   }));
@@ -180,6 +189,7 @@ function getBoard_() {
   return { ok: true, tasks: tasks, team: getTeam_(), recursos: getRecursos_(), ambitos: AMBITOS,
            horario: optional_(getHorario_), plan: plan, calendario: optional_(getCalendarioIPN_),
            fijas: optional_(getFijas_), hechos: hechos,
+           cortes: optional_(getCortes_), caminos: optional_(getCaminos_), temario: optional_(getTemario_),
            estados: ESTADOS, prioridades: PRIORIDADES, miWhatsapp: myPhone_(), serverTime: now_() };
 }
 
@@ -190,7 +200,7 @@ function claveClase_(h) { return 'clase|' + h.dia + '|' + h.inicio + '|' + h.fin
 
 /** Marca o desmarca una ocurrencia (clave, fecha). Devuelve el tablero completo. */
 function toggleHecho_(clave, fecha, done) {
-  const c = String(clave || '').trim(), f = parseDate_(fecha);
+  const c = String(clave || '').trim().slice(0, 300), fd = parseDate_(fecha), f = fd ? fmtDay_(fd) : '';
   if (!c || !f) throw new Error('Falta clave o fecha.');
   return withLock_(() => {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -202,13 +212,115 @@ function toggleHecho_(clave, fecha, done) {
       for (let i = 0; i < vals.length; i++) if (String(vals[i][0]) === c && fmtDay_(vals[i][1]) === f) { fila = i + 2; break; }
     }
     if (done) {
-      if (fila === -1) sh.appendRow([c, f, now_()]);
+      if (fila === -1) sh.appendRow([clean_(c), fd, now_()]);
       else sh.getRange(fila, 3).setValue(now_());
     } else if (fila !== -1) sh.deleteRow(fila);
     avisarCambio_();
     return getBoard_();
   });
 }
+
+/* ---- Cortes (evidencia), Caminos (hábitos y pagos) y Temario (módulos de cursos) ---- */
+const CORTES_HEADERS = ['ID', 'Camino', 'Fecha', 'Nota', 'Link', 'Imagen', 'Creado'];
+const EVIDENCIAS_CARPETA = 'Dame la Vida · Evidencias';
+
+/** Cortes: puntos de revisión con nota, link y/o captura. Camino = ID de asignación (DP-002) o de la pestaña Caminos. */
+function getCortes_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CORTES);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues()
+    .filter(r => String(r[0]).trim() && String(r[1]).trim())
+    .map(r => ({ id: String(r[0]).trim(), camino: String(r[1]).trim(), fecha: fmtDay_(r[2]), nota: String(r[3] || ''),
+                 link: String(r[4] || ''), imagen: String(r[5] || '').trim(), creado: fmt_('creado', r[6]) }));
+}
+
+function saveCorte_(c) {
+  c = c || {};
+  const camino = clean_(c.camino).slice(0, 60);
+  if (!camino) throw new Error('El corte necesita un camino.');
+  const fd = parseDate_(c.fecha) || parseDate_(hoy_());
+  const nota = clean_(c.nota).slice(0, 1000);
+  const link = /^https?:\/\//i.test(String(c.link || '').trim()) ? String(c.link).trim().slice(0, 1000) : '';
+  let imagen = '';
+  if (c.imagen) imagen = guardarImagen_(String(c.imagen));
+  if (!nota && !link && !imagen) throw new Error('Agrega una nota, un link o una captura.');
+  return withLock_(() => {
+    const sh = ensureSheet_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_CORTES, CORTES_HEADERS);
+    const n = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().reduce((m, r) => Math.max(m, parseInt(String(r[0]).replace(/\D/g, ''), 10) || 0), 0) : 0;
+    sh.appendRow(['COR-' + String(n + 1).padStart(3, '0'), camino, fd, nota, link, imagen, now_()]);
+    return getBoard_();
+  });
+}
+
+function deleteCorte_(id) {
+  return withLock_(() => {
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CORTES);
+    if (sh && sh.getLastRow() > 1) {
+      const vals = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
+      for (let i = 0; i < vals.length; i++) if (String(vals[i][0]) === String(id)) {
+        const img = String(vals[i][5] || '').trim();
+        if (img) { try { DriveApp.getFileById(img).setTrashed(true); } catch (err) { Logger.log(err); } }
+        sh.deleteRow(i + 2); break;
+      }
+    }
+    return getBoard_();
+  });
+}
+
+/** Guarda una captura (data URL jpeg/png/webp, ya reducida por el navegador) en Drive y devuelve su ID. */
+function guardarImagen_(dataUrl) {
+  const m = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+\/=]+)$/);
+  if (!m) throw new Error('La imagen debe ser JPG, PNG o WebP.');
+  const bytes = Utilities.base64Decode(m[2]);
+  if (bytes.length > 3 * 1024 * 1024) throw new Error('La imagen pesa más de 3 MB.');
+  const props = PropertiesService.getScriptProperties();
+  let folder = null, fid = props.getProperty('EVIDENCIAS_FOLDER');
+  if (fid) { try { folder = DriveApp.getFolderById(fid); } catch (err) { folder = null; } }
+  if (!folder) {
+    const it = DriveApp.getFoldersByName(EVIDENCIAS_CARPETA);
+    folder = it.hasNext() ? it.next() : DriveApp.createFolder(EVIDENCIAS_CARPETA);
+    props.setProperty('EVIDENCIAS_FOLDER', folder.getId());
+  }
+  const ext = m[1] === 'image/png' ? 'png' : m[1] === 'image/webp' ? 'webp' : 'jpg';
+  const file = folder.createFile(Utilities.newBlob(bytes, m[1], 'corte-' + now_().replace(/\D/g, '') + '.' + ext));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);   // para que el tablero pueda mostrarla
+  return file.getId();
+}
+
+/** Caminos de hábitos y pagos (pestaña Caminos): ID · Título · Tipo · Actividad (Fijas) · Desde · Hasta · Meta · Meta fecha · Color · Notas. */
+function getCaminos_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CAMINOS);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 10).getValues()
+    .filter(r => String(r[0]).trim() && String(r[1]).trim())
+    .map(r => ({ id: String(r[0]).trim(), titulo: String(r[1]).trim(), tipo: norm_(r[2]) === 'pago' ? 'pago' : 'hábito', actividad: String(r[3] || '').trim(),
+                 desde: fmtDay_(r[4]), hasta: fmtDay_(r[5]), meta: String(r[6] || '').trim(), metaFecha: fmtDay_(r[7]),
+                 color: /^#[0-9a-f]{6}$/i.test(String(r[8] || '').trim()) ? String(r[8]).trim() : '', notas: String(r[9] || '') }));
+}
+
+/** Módulos de un curso (pestaña Temario): Camino (ID de asignación) · Bloque · Módulo · Lecciones · Fecha meta · Hecho · Notas. */
+function getTemario_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TEMARIO);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues()
+    .filter(r => String(r[0]).trim() && String(r[2]).trim())
+    .map(r => ({ camino: String(r[0]).trim(), bloque: String(r[1] || '').trim(), modulo: String(r[2]).trim(), lecciones: Number(r[3]) || 0,
+                 fecha: fmtDay_(r[4]), hecho: r[5] === true || /^true$/i.test(String(r[5])), notas: String(r[6] || '') }));
+}
+
+function toggleModulo_(camino, modulo, done) {
+  return withLock_(() => {
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TEMARIO);
+    if (!sh) throw new Error('No existe la pestaña Temario.');
+    const vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues() : [];
+    for (let i = 0; i < vals.length; i++) if (String(vals[i][0]).trim() === String(camino) && String(vals[i][2]).trim() === String(modulo)) {
+      sh.getRange(i + 2, 6).setValue(!!done); break;
+    }
+    return getBoard_();
+  });
+}
+
+function norm_(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
 
 function getHechos_() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_HECHOS);
@@ -443,6 +555,7 @@ function resumenDelDia_(ymd) {
   if (deMan.length) out.push('', '*Mañana*', ...deMan.map(linea));
   if (ev.clases.length) out.push('', '*Clases*', ...ev.clases.map(c => '• ' + c.inicio + ' ' + c.titulo));
   if (ev.plan.length) out.push('', '*Plan de estudio*', ...ev.plan.map(b => '• ' + b.inicio + '–' + b.fin + ' ' + b.actividad));
+  if (dowDe_(ymd) === 0) out.push('', '*Domingo de corte*', 'Sube tu evidencia de la semana en Progreso: un link o una captura de cada avance.');
   return out.join('\n');
 }
 
