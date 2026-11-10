@@ -548,11 +548,23 @@ details.mats > summary:hover { background: var(--bg-surface); }
   .pr-zonas { justify-content: flex-end; padding-right: 10px; opacity: .05; }
 }
 
+
+#sky { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+.wrap { z-index: 1; }
+.pgchips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.pgchip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-secondary); font-size: 12px; cursor: pointer; white-space: nowrap; transition: var(--transition-base); }
+.pgchip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); } .pgchip b { color: var(--text-primary); font-weight: 700; }
+.pgchip:hover { border-color: var(--c); } .pgchip[aria-pressed="true"] { border-color: var(--c); background: color-mix(in oklab, var(--c) 16%, var(--bg-surface)); color: var(--text-primary); }
+#pgDetail { display: grid; gap: 34px; } .pgroad { min-width: 0; }
+.pr-zonas { padding: 0 6%; text-align: center; } .pr-zonas b { font-size: clamp(34px, 7vw, 104px); letter-spacing: .06em; line-height: 1.02; text-wrap: balance; }
+.pr-stage { background: radial-gradient(900px 400px at 50% -10%, rgba(255,255,255,.035), transparent 60%), rgba(15,15,15,.82); }
+@media (max-width: 760px) { .pr-zonas { padding: 0 6px 0 0; } .pr-zonas b { font-size: clamp(26px, 9vw, 44px); letter-spacing: .1em; white-space: nowrap; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body data-ambito="Desarrollo profesional">
 
+<canvas id="sky" aria-hidden="true"></canvas>
 <div class="wrap" id="app">
   <header class="top">
     <img class="logo" src="assets/logo.png" width="54" height="95" alt="Logo de Irvin">
@@ -603,8 +615,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
       <select class="pgselect" id="pgSel" aria-label="Elegir un camino"></select>
     </div>
     <div class="pgbanner" id="pgCorteBanner" hidden><span>🌟 Hoy es domingo de corte: sube una captura o un link con lo que avanzaste.</span><button class="btn primary" id="pgCorteHoy" type="button">Hacer corte</button></div>
-    <div class="pggrid" id="pgOver"></div>
-    <div id="pgDetail" hidden></div>
+    <div class="pgchips" id="pgChips" aria-label="Elegir una actividad"></div>
+    <div class="pgbanner" id="pgViejo" hidden><span>Faltan tus caminos de medicina, pagos y hábitos porque el Apps Script sigue en una versión anterior. Pega el <b>Code.gs</b> nuevo y publica: Implementar → Gestionar implementaciones → ✏️ → Nueva versión.</span></div>
+    <div id="pgDetail"></div>
   </section>
 
   <!-- vista calendario -->
@@ -1010,6 +1023,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     state.hechos.forEach(function (h) { state.hechosSet[h.clave + "|" + h.fecha] = true; });
     state.cortes = res.cortes || [];
     state.caminos = res.caminos || [];
+    state.sinCaminos = MODE === "live" && res.caminos === undefined;
     state.temario = res.temario || [];
     state.miWhatsapp = res.miWhatsapp || "";
     setSync("", (MODE === "live" ? "Sincronizado · " : "Modo demo · ") + (res.serverTime || "").slice(11));
@@ -1551,9 +1565,14 @@ details.mats > summary:hover { background: var(--bg-surface); }
       btn.hidden = false;
       btn.textContent = done ? "✓ Hecha · desmarcar" : "Marcar como hecha";
       btn.className = "btn" + (done ? " done" : "");
+      btn.disabled = false;
       btn.onclick = function () {
-        btn.disabled = true;
-        run(api.toggleHecho(x.clave, x.ymd, !done)).then(function () { $("dlgFija").close(); });
+        // Se pinta al instante; la hoja se actualiza por detrás.
+        var k = x.clave + "|" + x.ymd;
+        if (done) delete state.hechosSet[k]; else state.hechosSet[k] = true;
+        $("dlgFija").close(); render();
+        toast(done ? "Desmarcada" : "¡Hecha! ✓");
+        run(api.toggleHecho(x.clave, x.ymd, !done));
       };
       if (stLabel === "done") { st.hidden = false; st.textContent = "Hecha"; st.className = "pill done"; }
       else if (stLabel === "miss") { st.hidden = false; st.textContent = "Pendiente"; st.className = "pill miss"; }
@@ -1972,12 +1991,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
     return Math.max(0, Math.min(100, Math.round((t - a) * 100 / (b - a))));
   }
   function fmtCorto(ymd) { var d = parseYMD(ymd); return d ? d.getDate() + " " + MESES[d.getMonth()] + (d.getFullYear() !== today0().getFullYear() ? " " + String(d.getFullYear()).slice(2) : "") : ""; }
-  function isSchoolTask(t) { return t.ambito === DP && (instList(t).indexOf("ESCOM") > -1); }
+  var MATERIAS = ["Algoritmos y Estructura de Datos", "Programación para Ciencia de Datos", "Introducción a la Ciencia de Datos", "Ética y Legalidad", "Matemáticas", "Inglés"];
+  function isSchoolTask(t) { return t.ambito === DP && (instList(t).indexOf("ESCOM") > -1 || MATERIAS.indexOf(t.categoria) > -1); }
   function taskHito(t) {
     var ymd = t.fecha || t.inicio, tdy = ymdOf(today0());
     var done = t.estado === "Done";
     return { ymd: ymd, label: t.titulo, sub: [t.tipo, t.categoria].filter(Boolean).join(" · "), kind: /examen/i.test(t.tipo) ? "examen" : "tarea", done: done,
-             miss: !done && ymd < tdy, task: t.id };
+             miss: !done && !!t.fecha && t.fecha < tdy, task: t.id };
   }
   function cortesHitos(id) {
     return state.cortes.filter(function (c) { return c.camino === id; }).map(function (c) {
@@ -2015,10 +2035,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
       var tt = escuela.length, dn = escuela.filter(function (t) { return t.estado === "Done"; }).length;
       out.push({ id: "SEM", grupo: "Semestre", titulo: "Semestre", sub: fmtCorto(sd) + " → " + fmtCorto(sh), color: "#9DB4CF", desde: sd, hasta: sh, hitos: hs,
                  rec: spanPct(sd, sh), hecho: pctOf(dn, tt), detalle: dn + " de " + tt + " entregas hechas" });
-      var cats = {}; escuela.forEach(function (t) { if (t.categoria) (cats[t.categoria] = cats[t.categoria] || []).push(t); });
+      var cats = {}; MATERIAS.forEach(function (m) { if (conf(DP).categorias.indexOf(m) > -1) cats[m] = []; });
+      escuela.forEach(function (t) { if (t.categoria) (cats[t.categoria] = cats[t.categoria] || []).push(t); });
       Object.keys(cats).forEach(function (c, i) {
         var ts = cats[c], id = "MAT-" + c, h2 = ts.map(taskHito).concat(cortesHitos(id)), d2 = ts.filter(function (t) { return t.estado === "Done"; }).length;
-        out.push({ id: id, grupo: "Materia", titulo: c, sub: ts.length + (ts.length === 1 ? " asignación" : " asignaciones"), color: catColor(DP, c), desde: sd, hasta: sh, hitos: h2,
+        out.push({ id: id, grupo: "Materia", titulo: c, sub: ts.length ? ts.length + (ts.length === 1 ? " asignación" : " asignaciones") : "Sin asignaciones todavía", color: catColor(DP, c), desde: sd, hasta: sh, hitos: h2,
                    rec: spanPct(sd, sh), hecho: pctOf(d2, ts.length), detalle: d2 + " de " + ts.length + " hechas" });
       });
     }
@@ -2077,33 +2098,23 @@ details.mats > summary:hover { background: var(--bg-surface); }
   /* ------------ Progreso: pantalla ------------ */
   state.pg = { grupo: "", sel: "" };
   function pgFiltrados(all) { return all.filter(function (c) { return !state.pg.grupo || c.grupo === state.pg.grupo; }); }
-  function miniRoad(c) {
-    var w = 300, h = 26, x0 = 8, x1 = w - 8, xt = x0 + (x1 - x0) * c.rec / 100;
-    var span = (parseYMD(c.hasta) - parseYMD(c.desde)) || 1, dots = c.hitos.filter(function (hh) { return hh.kind !== "corte"; }).slice(0, 80).map(function (hh) {
-      var f = Math.max(0, Math.min(1, (parseYMD(hh.ymd) - parseYMD(c.desde)) / span)), x = x0 + (x1 - x0) * f;
-      return '<circle cx="' + x.toFixed(1) + '" cy="13" r="3.4" class="md ' + (hh.done ? "ok" : hh.miss ? "bad" : "") + '"/>';
-    }).join("");
-    return '<svg class="mini" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="M' + x0 + " 13 H" + x1 + '" class="mr0"/><path d="M' + x0 + " 13 H" + xt.toFixed(1) + '" class="mr1" style="stroke:' + c.color + '"/>' + dots +
-      '<circle cx="' + xt.toFixed(1) + '" cy="13" r="5.5" class="mv" style="fill:' + c.color + '"/></svg>';
-  }
-  function pgCard(c) {
-    return '<button type="button" class="pgcard" data-pg="' + esc(c.id) + '" style="--c:' + c.color + '"><span class="pgg">' + esc(c.grupo) + '</span><b>' + esc(c.titulo) + '</b><small>' + esc(c.sub) + "</small>" + miniRoad(c) +
-      '<span class="pgnums"><span><b>' + c.rec + '%</b> recorrido</span><span><b>' + c.hecho + '%</b> hecho</span></span><small>' + esc(c.detalle) + "</small></button>";
-  }
   function renderProg() {
     var all = buildCaminos(), sel = all.filter(function (c) { return c.id === state.pg.sel; })[0];
     if (!sel) state.pg.sel = "";
     var list = pgFiltrados(all);
     $("pgGrupos").innerHTML = PG_GRUPOS.map(function (g) { return '<button type="button" data-g="' + g[0] + '" aria-pressed="' + (state.pg.grupo === g[0]) + '">' + g[1] + "</button>"; }).join("");
-    var opts = '<option value="">Ver todos los caminos</option>' + list.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === state.pg.sel ? " selected" : "") + ">" + esc(c.titulo) + "</option>"; }).join("");
-    $("pgSel").innerHTML = opts;
+    $("pgSel").innerHTML = '<option value="">Todas las actividades</option>' + list.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === state.pg.sel ? " selected" : "") + ">" + esc(c.titulo) + "</option>"; }).join("");
+    $("pgChips").innerHTML = list.map(function (c) {
+      return '<button type="button" class="pgchip" data-pg="' + esc(c.id) + '" aria-pressed="' + (c.id === state.pg.sel) + '" style="--c:' + c.color + '"><i></i>' + esc(c.titulo) + " <b>" + c.hecho + "%</b></button>"; }).join("");
     var sunday = today0().getDay() === 0, hoyCorte = state.cortes.some(function (c) { return c.fecha === ymdOf(today0()); });
     $("pgCorteBanner").hidden = !(sunday && !hoyCorte);
-    $("pgOver").hidden = !!sel; $("pgDetail").hidden = !sel;
-    if (!sel) {
-      var total = list.length;
-      $("pgOver").innerHTML = total ? list.map(pgCard).join("") : '<p class="pgempty">Todavía no hay caminos en este filtro.</p>';
-    } else renderRoad(sel);
+    $("pgViejo").hidden = !state.sinCaminos;
+    var box = $("pgDetail"), shown = sel ? [sel] : list;
+    box.innerHTML = shown.length ? "" : '<p class="pgempty">Todavía no hay caminos en este filtro.</p>';
+    shown.forEach(function (c, i) {
+      var el = document.createElement("section"); el.className = "pgroad"; box.appendChild(el);
+      renderRoad(c, el, i, !!sel);
+    });
   }
   /* --- Geometría del camino: desktop serpentea izq-der-izq, móvil "S" vertical --- */
   function buildRoad(W, nodes) {
@@ -2121,7 +2132,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       }
       return { mode: "v", w: W, h: H, samples: s, anchors: anchors.map(function (y) { return { y: y }; }) };
     }
-    var D = { MARGIN: 92, ROW_GAP: 300, TOP: 130, STEP: 9, WAVE: 18, BULGE: 70, BOT: 150 };
+    var D = { MARGIN: 130, ROW_GAP: 430, TOP: 215, STEP: 9, WAVE: 18, BULGE: 70, BOT: 230 };
     var rowW = W - 2 * D.MARGIN, GAP = Math.max(280, Math.min(520, rowW / Math.max(2, Math.min(5, n))));
     var anchorsP = [], pos = 0;
     nodes.forEach(function (_, i) { if (i) pos += GAP; anchorsP.push(pos); });
@@ -2197,8 +2208,8 @@ details.mats > summary:hover { background: var(--bg-surface); }
   }
   function pinTint(color) { return color; }
 
-  function renderRoad(c) {
-    var wrap = $("pgDetail"), W = Math.max(320, wrap.clientWidth || wrap.getBoundingClientRect().width || 360), tdy = ymdOf(today0());
+  function renderRoad(c, wrap, idx, solo) {
+    var W = Math.max(320, wrap.clientWidth || wrap.getBoundingClientRect().width || 360), tdy = ymdOf(today0()), uid = "r" + idx;
     // Nodos en orden
     var nodes = [{ ymd: c.desde, label: "Inicio", sub: fmtCorto(c.desde), kind: "inicio", done: c.desde <= tdy }]
       .concat(c.hitos.slice().sort(function (a, b) { return a.ymd < b.ymd ? -1 : a.ymd > b.ymd ? 1 : 0; }))
@@ -2220,11 +2231,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
     // SVG: halo, camino, velo, tramo recorrido
     var d = pathD(samples, g.mode);
     var svg = '<svg class="pr-svg" viewBox="0 0 ' + W + ' ' + g.h + '" width="' + W + '" height="' + g.h + '" preserveAspectRatio="none" aria-hidden="true">' +
-      '<defs><linearGradient id="prg-' + esc(c.id) + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="' + c.color + '" stop-opacity=".4"/><stop offset="100%" stop-color="' + c.color + '" stop-opacity=".9"/></linearGradient></defs>' +
+      '<defs><linearGradient id="prg-' + uid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="' + c.color + '" stop-opacity=".4"/><stop offset="100%" stop-color="' + c.color + '" stop-opacity=".9"/></linearGradient></defs>' +
       '<path d="' + d + '" class="pr-halo" style="stroke:' + c.color + '"/>' +
       '<path d="' + d + '" class="pr-base"/>' +
       '<path d="' + d + '" class="pr-dash"/>' +
-      '<path id="pr-done-' + esc(c.id) + '" d="' + d + '" class="pr-done" style="stroke:url(#prg-' + esc(c.id) + ')"/>';
+      '<path id="pr-done-' + uid + '" d="' + d + '" class="pr-done" style="stroke:url(#prg-' + uid + ')"/>';
     // pines + cards
     var cards = "", stalks = "";
     nodes.forEach(function (n, i) {
@@ -2235,14 +2246,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
       if (narrow) side = "r";
       else {
         // calculo fila a partir de y
-        var row = Math.round((p.y - 130) / 300);
-        side = (i % 2 === 0) ? (row % 2 === 0 ? "u" : "d") : (row % 2 === 0 ? "d" : "u");
+        side = i % 2 === 0 ? "d" : "u";
       }
       if (i === 0) side = narrow ? "r" : "d";
-      if (i === nodes.length - 1) side = narrow ? "r" : "u";
+      
       // extremo de la varilla
       var off = narrow ? 70 : (side === "u" ? -80 : 80);
-      var cx = p.x + p.nx * off, cy = p.y + p.ny * off;
+      var cx = narrow ? p.x + p.nx * off : p.x, cy = narrow ? p.y + p.ny * off : p.y + off;
       stalks += '<path d="M' + r1(p.x) + ' ' + r1(p.y) + ' L' + r1(cx) + ' ' + r1(cy) + '" class="pr-stalk" style="stroke:' + c.color + '"/>';
       svg += '<g transform="translate(' + r1(p.x) + ' ' + r1(p.y) + ')">' + pinHead(n.kind, st, c.color) + "</g>";
       // Card — posición absoluta con left/top en píxeles
@@ -2250,7 +2260,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       var left = narrow ? cx + 8 : cx - cardW / 2;
       // Ajuste de bordes
       if (!narrow) { if (left < 8) left = 8; if (left + cardW > W - 8) left = W - 8 - cardW; }
-      var top = narrow ? cy - 26 : (side === "u" ? cy - 88 : cy + 8);
+      var vpos = narrow ? "top:" + r1(cy - 26) + "px" : side === "u" ? "bottom:" + r1(g.h - cy + 6) + "px" : "top:" + r1(cy + 6) + "px";
       // Contenido
       var kicker = n.kind === "inicio" ? "Inicio" : n.kind === "meta" ? "Meta" : fmtCorto(n.ymd);
       var body;
@@ -2267,11 +2277,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
                "</div><b class=\"pr-t\">" + esc(n.label) + "</b>" +
                (n.sub ? '<small class="pr-s">' + esc(n.sub) + "</small>" : "") +
                (n.pctMes != null ? '<div class="pr-mes"><i style="width:' + n.pctMes + '%;background:' + c.color + '"></i></div><small class="pr-s">' + n.pctMes + "% de cumplimiento</small>" : "") +
-               (n.modulo ? '<button type="button" class="pgmod" data-mod="' + esc(n.modulo.modulo) + '">' + (n.done ? "Desmarcar" : "Marcar hecho") + "</button>" : "") +
+               (n.modulo ? '<button type="button" class="pgmod" data-cam="' + esc(c.id) + '" data-mod="' + esc(n.modulo.modulo) + '">' + (n.done ? "Desmarcar" : "Marcar hecho") + "</button>" : "") +
                (n.task ? '<span class="pr-go">Abrir asignación →</span>' : "");
       }
       var extraClass = (n.task ? " clickable" : "") + (n.corte ? " corte" : "");
-      cards += '<div class="pr-card ' + n.kind + " " + st + extraClass + '" style="left:' + r1(left) + "px;top:" + r1(top) + "px;width:" + cardW + 'px"' +
+      cards += '<div class="pr-card ' + n.kind + " " + st + extraClass + '" style="left:' + r1(left) + "px;" + vpos + ";width:" + cardW + 'px"' +
         (n.task ? ' data-task="' + esc(n.task) + '"' : "") + ">" + body + "</div>";
     });
     // Viajero
@@ -2280,7 +2290,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     svg += stalks + "</svg>";
     // Zonas (nombre grande semitransparente de fondo por "tercios")
     var zonaHTML = '<div class="pr-zonas">' +
-      '<b style="color:' + c.color + '">' + esc(c.grupo.toUpperCase()) + '</b></div>';
+      '<b style="color:' + c.color + '">' + esc(c.titulo) + '</b></div>';
     // HUD con minimapa y nombre del siguiente hito
     var next = nodes[Math.min(nodes.length - 1, ti + (tf > 0 ? 1 : 0))];
     var hud = '<div class="pr-hud" style="--c:' + c.color + '">' +
@@ -2293,15 +2303,15 @@ details.mats > summary:hover { background: var(--bg-surface); }
       }).join("") + "</div></div>";
 
     var head = '<div class="pghead" style="--c:' + c.color + '">' +
-      '<button class="btn ghost" id="pgBack" type="button">← Todos</button>' +
+      (solo ? '<button class="btn ghost" id="pgBack" type="button">← Todos</button>' : '<button class="btn ghost" type="button" data-pg="' + esc(c.id) + '">Ver solo</button>') +
       '<div class="pgtitle"><span class="pgg mono">' + esc(c.grupo) + "</span><h2>" + esc(c.titulo) + "</h2><small>" + esc(c.sub) + "</small></div>" +
       '<div class="pgstat"><div><b>' + c.rec + '%</b><span>recorrido</span></div><div><b>' + c.hecho + '%</b><span>hecho</span></div></div>' +
       '<div class="pgbars"><div class="pgbar"><i style="width:' + c.rec + '%;background:var(--silver-dim);box-shadow:inset 0 0 0 1px var(--border-strong)"></i><i style="width:' + c.hecho + '%;background:' + c.color + '"></i></div><small>' + esc(c.detalle) + '</small></div>' +
-      '<button class="btn primary" id="pgAddCorte" type="button" data-camino="' + esc(c.id) + '">+ Agregar corte</button></div>';
+      '<button class="btn primary pgAddCorte" type="button" data-camino="' + esc(c.id) + '">+ Agregar corte</button></div>';
     wrap.innerHTML = head + hud + '<div class="pr-stage" style="height:' + g.h + 'px">' + zonaHTML + svg + cards + "</div>";
     // Longitud real del camino para animar la línea recorrida
     try {
-      var baseEl = document.querySelector("#pgDetail .pr-base"), done = document.getElementById("pr-done-" + c.id);
+      var baseEl = wrap.querySelector(".pr-base"), done = document.getElementById("pr-done-" + uid);
       if (baseEl && done) {
         var len = baseEl.getTotalLength();
         done.style.strokeDasharray = (len * frac) + " " + (len + 10);
@@ -2351,19 +2361,65 @@ details.mats > summary:hover { background: var(--bg-surface); }
   pgv.addEventListener("click", function (ev) {
     var t = ev.target;
     var g = t.closest("[data-g]"); if (g) { state.pg.grupo = g.dataset.g; state.pg.sel = ""; return renderProg(); }
-    var card = t.closest("[data-pg]"); if (card) { state.pg.sel = card.dataset.pg; renderProg(); window.scrollTo(0, 0); return; }
     if (t.closest("#pgBack")) { state.pg.sel = ""; return renderProg(); }
-    var ac = t.closest("#pgAddCorte"); if (ac) return openCorte(ac.dataset.camino);
+    var card = t.closest("[data-pg]"); if (card) { state.pg.sel = state.pg.sel === card.dataset.pg ? "" : card.dataset.pg; renderProg(); $("progView").scrollIntoView({ block: "start" }); return; }
+    var ac = t.closest(".pgAddCorte"); if (ac) return openCorte(ac.dataset.camino);
     if (t.closest("#pgCorteHoy")) return openCorte(state.pg.sel || "");
     var dc = t.closest("[data-delcorte]"); if (dc) { if (confirm("¿Borrar este corte?")) run(api.deleteCorte(dc.dataset.delcorte), "Corte borrado"); return; }
     var mb = t.closest(".pgmod"); if (mb) {
-      var m = state.temario.filter(function (x) { return x.camino === state.pg.sel && x.modulo === mb.dataset.mod; })[0];
-      if (m) run(api.toggleModulo(m.camino, m.modulo, !m.hecho)); return;
+      var m = state.temario.filter(function (x) { return x.camino === mb.dataset.cam && x.modulo === mb.dataset.mod; })[0];
+      if (m) { m.hecho = !m.hecho; renderProg(); run(api.toggleModulo(m.camino, m.modulo, m.hecho)); } return;
     }
     var tk = t.closest("a") ? null : t.closest("[data-task]"); if (tk && taskById(tk.dataset.task)) openForm(taskById(tk.dataset.task));
   });
   $("pgSel").addEventListener("change", function () { state.pg.sel = this.value; renderProg(); });
-  var pgResize; window.addEventListener("resize", function () { clearTimeout(pgResize); pgResize = setTimeout(function () { if (state.view === "prog" && state.pg.sel) renderProg(); }, 200); });
+  var pgResize, pgW = window.innerWidth; window.addEventListener("resize", function () { if (window.innerWidth === pgW) return; pgW = window.innerWidth; clearTimeout(pgResize); pgResize = setTimeout(function () { if (state.view === "prog") renderProg(); }, 200); });
+
+  /* ------------ fondo animado: partículas y cometas, muy tenue ------------ */
+  (function () {
+    var cv = $("sky"), cx = cv.getContext && cv.getContext("2d"); if (!cx) return;
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var W, H, dpr, P = [], comet = null, last = 0, raf = 0;
+    function size() {
+      dpr = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var n = Math.round(Math.min(70, W * H / 22000)); P = [];
+      for (var i = 0; i < n; i++) P.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .12, vy: (Math.random() - .5) * .12, r: .6 + Math.random() * 1.1, ph: Math.random() * 6.28, o: Math.random() < .12 });
+    }
+    function frame(t) {
+      var dt = Math.min(50, t - last || 16); last = t;
+      cx.clearRect(0, 0, W, H);
+      for (var i = 0; i < P.length; i++) {
+        var p = P[i]; p.x += p.vx * dt / 16; p.y += p.vy * dt / 16; p.ph += .012;
+        if (p.x < -10) p.x = W + 10; if (p.x > W + 10) p.x = -10; if (p.y < -10) p.y = H + 10; if (p.y > H + 10) p.y = -10;
+        var a = .16 + .12 * Math.sin(p.ph);
+        cx.fillStyle = "rgba(200,214,235," + a.toFixed(3) + ")"; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill();
+        if (p.o) { // "órbita" cuántica: un electrón girando
+          cx.strokeStyle = "rgba(157,180,207,.07)"; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(p.x, p.y, 14, 5, p.ph * .3, 0, 6.28); cx.stroke();
+          var ex = p.x + 14 * Math.cos(p.ph * 2) * Math.cos(p.ph * .3) - 5 * Math.sin(p.ph * 2) * Math.sin(p.ph * .3), ey = p.y + 14 * Math.cos(p.ph * 2) * Math.sin(p.ph * .3) + 5 * Math.sin(p.ph * 2) * Math.cos(p.ph * .3);
+          cx.fillStyle = "rgba(220,230,245,.35)"; cx.beginPath(); cx.arc(ex, ey, .9, 0, 6.28); cx.fill();
+        }
+        for (var j = i + 1; j < P.length; j++) {
+          var q = P[j], dx = p.x - q.x, dy = p.y - q.y, d2 = dx * dx + dy * dy;
+          if (d2 < 12000) { cx.strokeStyle = "rgba(157,180,207," + (.07 * (1 - d2 / 12000)).toFixed(3) + ")"; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(q.x, q.y); cx.stroke(); }
+        }
+      }
+      if (!still) {
+        if (!comet && Math.random() < .0016) comet = { x: Math.random() * W * .8, y: -20, vx: 2.2 + Math.random() * 1.5, vy: 1.3 + Math.random(), life: 1 };
+        if (comet) {
+          comet.x += comet.vx * dt / 16; comet.y += comet.vy * dt / 16; comet.life -= .004 * dt / 16;
+          var tx = comet.x - comet.vx * 38, ty = comet.y - comet.vy * 38, gr = cx.createLinearGradient(comet.x, comet.y, tx, ty);
+          gr.addColorStop(0, "rgba(235,240,250," + (.4 * comet.life).toFixed(3) + ")"); gr.addColorStop(1, "rgba(235,240,250,0)");
+          cx.strokeStyle = gr; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(comet.x, comet.y); cx.lineTo(tx, ty); cx.stroke();
+          if (comet.life <= 0 || comet.x > W + 80 || comet.y > H + 80) comet = null;
+        }
+        raf = requestAnimationFrame(frame);
+      }
+    }
+    size(); raf = requestAnimationFrame(frame);
+    var rs; window.addEventListener("resize", function () { clearTimeout(rs); rs = setTimeout(function () { size(); if (still) frame(0); }, 250); });
+    document.addEventListener("visibilitychange", function () { cancelAnimationFrame(raf); if (!document.hidden && !still) { last = 0; raf = requestAnimationFrame(frame); } });
+  })();
 
   /* ------------ eventos ------------ */
   function setAmbito(a) { state.ambito = a; state.f = { cat: "", tipo: "", inst: "", prio: "" }; state.openPop = ""; store("irvin.ambito", a); render(); }
