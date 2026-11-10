@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0A0A">
 <meta name="robots" content="noindex">
-<title>Tablero · Irvin</title>
+<title>Dame la Vida · Irvin</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
 <style>
 /* Identidad: negros profundos, plata del logo como acento, Montserrat para títulos y Helvetica para el texto.
-   Escuela y Personal comparten la misma estructura; solo cambia un tinte frío (escuela) o cálido (personal). */
+   Desarrollo profesional y Personal comparten la misma estructura; solo cambia un tinte frío o cálido. */
 :root {
   --bg-base: #0A0A0A;
   --bg-surface: #141414;
@@ -36,7 +36,12 @@
   --st-done: #7FB89A;
   --p-urg: #E5484D;  --p-urg-bg: rgba(229,72,77,.16);
   --p-imp: #E2A336;  --p-imp-bg: rgba(226,163,54,.15);
-  --p-nor: #9DB4CF;  --p-nor-bg: rgba(157,180,207,.13);
+  --p-nor: #6FBF8E;  --p-nor-bg: rgba(111,191,142,.14);
+  --cls: #5B8DEF;    --cls-bg: rgba(91,141,239,.17);
+  --meal: #5FD03A;
+  --pay: #CDB08A;    --pay-bg: rgba(205,176,138,.16);
+  --med: #E58FB8;    --med-bg: rgba(229,143,184,.15);
+  --rut: #B4B4B4;    --rut-bg: rgba(180,180,180,.10);
   --ipn: #B79CC9;    --ipn-bg: rgba(183,156,201,.14);
   --off-bg: rgba(127,184,154,.06);
   --scope: #9DB4CF;
@@ -78,11 +83,11 @@ header.top {
 .logo { width: 54px; height: auto; display: block; filter: drop-shadow(0 0 14px rgba(255,255,255,.08)); }
 .eyebrow { font: 600 11px/1.2 var(--font-display); letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 6px; }
 h1 { margin: 0; font: 800 clamp(26px, 4vw, 40px)/1 var(--font-display); color: var(--text-primary); letter-spacing: -.01em; }
-h1 em { font-style: normal; color: var(--scope); transition: color .2s; }
-.next { text-align: right; display: grid; gap: 4px; justify-items: end; }
-.next b { font: 800 44px/1 var(--font-display); color: var(--text-primary); font-variant-numeric: tabular-nums; }
-.next span { font-size: 12px; color: var(--text-muted); max-width: 260px; }
-.next span strong { color: var(--text-secondary); font-weight: 500; }
+.motto { margin: 8px 0 0; font: italic 500 13px/1.2 var(--font-display); letter-spacing: .04em; color: var(--text-muted); }
+.clock { text-align: right; display: grid; gap: 4px; justify-items: end; }
+.clock b { font: 800 44px/1 var(--font-display); color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.clock b small { font-size: 18px; color: var(--text-muted); font-weight: 600; margin-left: 4px; }
+.clock span { font-size: 12px; color: var(--text-muted); }
 
 .switches { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
 .seg2 { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px;
@@ -96,7 +101,9 @@ h1 em { font-style: normal; color: var(--scope); transition: color .2s; }
 .seg2 button:hover { color: var(--text-primary); }
 .seg2 button[aria-pressed="true"] { background: var(--bg-surface-2); color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--border-strong); }
 #scopeSwitch button[aria-pressed="true"]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--scope); box-shadow: 0 0 10px var(--scope); }
-#scopeSwitch { min-width: 300px; }
+#scopeSwitch { min-width: 360px; }
+#scopeSwitch .short { display: none; }
+@media (max-width: 560px) { #scopeSwitch .long { display: none; } #scopeSwitch .short { display: inline; } }
 
 .progress { grid-column: 1 / -1; display: grid; gap: 10px; }
 .bar { display: flex; height: 6px; background: var(--bg-input); border-radius: 99px; overflow: hidden; }
@@ -245,7 +252,14 @@ h1 em { font-style: normal; color: var(--scope); transition: color .2s; }
 .ev:hover { filter: brightness(1.25); z-index: 3; }
 .ev b { display: block; font-weight: 600; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ev small { display: block; color: var(--text-secondary); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ev.class { --g: #1A1A1A; --b: #8A8A8A; box-shadow: inset 0 0 0 1px #2A2A2A; }
+.ev.class { --g: var(--cls-bg); --b: var(--cls); }
+.ev.fixed { box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+.ev.traslado { background: repeating-linear-gradient(135deg, rgba(180,180,180,.08) 0 6px, transparent 6px 12px); }
+.mk { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--meal); z-index: 2; }
+.mk button { position: absolute; right: 3px; top: -9px; height: 18px; padding: 0 7px; border: 0; border-radius: 99px; cursor: pointer;
+  background: var(--meal); color: #0A0A0A; font: 700 10px/18px var(--font-body); white-space: nowrap; max-width: calc(50% - 5px); overflow: hidden; text-overflow: ellipsis; }
+.mk.rut { border-top-color: var(--rut); } .mk.rut button { background: var(--rut); right: auto; left: 3px; }
+.mk.med { border-top-color: var(--med); } .mk.med button { background: var(--med); right: auto; left: 3px; }
 .ev.done { opacity: .45; }
 .nowline { position: absolute; left: 0; right: 0; height: 2px; background: var(--p-urg); z-index: 4; pointer-events: none; }
 .nowline::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--p-urg); }
@@ -286,6 +300,10 @@ dialog h2 { margin: 0; font: 800 24px/1.1 var(--font-display); color: var(--text
 .seg.prio button[data-v="Urgente"][aria-pressed="true"] { background: var(--p-urg); border-color: var(--p-urg); color: #fff; }
 .seg.prio button[data-v="Importante"][aria-pressed="true"] { background: var(--p-imp); border-color: var(--p-imp); color: #000; }
 .stamp { font-size: 11px; color: var(--text-muted); }
+.fjgrid { display: grid; gap: 10px; grid-template-columns: 120px 1fr; font-size: 13.5px; }
+.fjgrid dt { font: 600 10px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); padding-top: 3px; }
+.fjgrid dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: pre-line; }
+@media (max-width: 560px) { .fjgrid { grid-template-columns: 1fr; gap: 2px; } .fjgrid dd { margin-bottom: 8px; } }
 .dlg-actions { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 .dlg-actions .right { display: flex; gap: 8px; margin-left: auto; }
 
@@ -388,9 +406,8 @@ details.mats > summary:hover { background: var(--bg-surface); }
 
 @media (max-width: 1024px) {
   header.top { grid-template-columns: auto 1fr; }
-  .next { grid-column: 1 / -1; justify-items: start; text-align: left; grid-template-columns: auto 1fr; align-items: baseline; gap: 10px; }
-  .next b { font-size: 30px; }
-  .next span { max-width: none; }
+  .clock { grid-column: 1 / -1; justify-items: start; text-align: left; grid-template-columns: auto 1fr; align-items: baseline; gap: 10px; }
+  .clock b { font-size: 30px; }
 }
 @media (max-width: 900px) { .board { grid-template-columns: 1fr; } }
 @media (max-width: 560px) {
@@ -417,23 +434,24 @@ details.mats > summary:hover { background: var(--bg-surface); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
-<body data-ambito="Escuela">
+<body data-ambito="Desarrollo profesional">
 
 <div class="wrap" id="app">
   <header class="top">
     <img class="logo" src="assets/logo.png" width="54" height="95" alt="Logo de Irvin">
     <div>
       <p class="eyebrow">Irvin · ESCOM IPN</p>
-      <h1>Mi tablero · <em id="scopeName">Escuela</em></h1>
+      <h1>Dame la Vida</h1>
+      <p class="motto">Fake it till you make it</p>
     </div>
-    <div class="next" id="next"></div>
+    <div class="clock" id="clock" aria-label="Hora en Ciudad de México"></div>
     <div class="switches">
       <div class="seg2" role="group" aria-label="Vista" id="viewSwitch">
         <button type="button" data-view="board" aria-pressed="true">Tablero</button>
         <button type="button" data-view="cal" aria-pressed="false">Calendario</button>
       </div>
       <div class="seg2" role="group" aria-label="Cambiar entre escuela y personal" id="scopeSwitch">
-        <button type="button" data-ambito="Escuela" aria-pressed="true">Escuela <small id="cntEscuela"></small></button>
+        <button type="button" data-ambito="Desarrollo profesional" aria-pressed="true"><span class="long">Desarrollo profesional</span><span class="short">DP</span> <small id="cntDP"></small></button>
         <button type="button" data-ambito="Personal" aria-pressed="false">Personal <small id="cntPersonal"></small></button>
       </div>
     </div>
@@ -479,7 +497,10 @@ details.mats > summary:hover { background: var(--bg-surface); }
       </div>
     </div>
     <div class="calkey">
-      <span><i style="--b:#8A8A8A;--g:#1A1A1A"></i>Clases</span>
+      <span><i style="--b:var(--cls);--g:var(--cls-bg)"></i>Clases y deporte</span>
+      <span><i style="--b:var(--meal);--g:var(--meal)"></i>Comidas</span>
+      <span><i style="--b:var(--rut);--g:var(--rut-bg)"></i>Rutina</span>
+      <span><i style="--b:var(--pay);--g:var(--pay-bg)"></i>Pagos</span>
       <span><i style="--b:var(--p-urg);--g:var(--p-urg-bg)"></i>Urgente</span>
       <span><i style="--b:var(--p-imp);--g:var(--p-imp-bg)"></i>Importante</span>
       <span><i style="--b:var(--p-nor);--g:var(--p-nor-bg)"></i>Normal</span>
@@ -520,21 +541,17 @@ details.mats > summary:hover { background: var(--bg-surface); }
     <h2 id="dlgTitle">Nueva asignación</h2>
     <input type="hidden" id="t_id">
 
-    <div class="grid2">
-      <div class="f"><label for="t_ambito">Ámbito</label>
-        <select id="t_ambito"><option>Escuela</option><option>Personal</option></select></div>
-      <div class="f"><label for="t_categoria" id="lblCategoria">Materia</label><select id="t_categoria"></select></div>
-      <div class="f"><label for="t_tipo">Tipo</label><select id="t_tipo"></select></div>
-      <div class="f"><label for="t_estado">Estado</label><select id="t_estado"><option value="To Do">Por hacer</option><option value="Doing">En curso</option><option value="Done">Hecho</option></select></div>
-    </div>
-    <div class="grid2" id="instBox">
-      <div class="f"><label for="t_inst1">Escuela / plataforma</label><select id="t_inst1"></select></div>
-      <div class="f"><label for="t_inst2">Segunda <span class="opt">(opcional)</span></label><select id="t_inst2"></select></div>
-    </div>
-    <input type="hidden" id="t_instituciones">
-
     <div class="f"><label for="t_titulo">Título</label><input id="t_titulo" required maxlength="160" placeholder="Ej. Práctica 3: pandas"></div>
     <div class="f"><label for="t_descripcion">Descripción <span class="opt">(opcional)</span></label><textarea id="t_descripcion" rows="3" placeholder="Qué hay que entregar, temas del examen, qué llevar…"></textarea></div>
+
+    <section class="mine" id="mineView" aria-live="polite">
+      <div class="mine-head"><span class="mine-title">Entregable</span><span class="mine-state" id="mineState">Pendiente</span></div>
+      <div id="mineBody"></div>
+    </section>
+    <div class="matview" id="matView" hidden>
+      <span class="matview-title">Recursos de la asignación</span>
+      <div class="matlinks" id="matLinks"></div>
+    </div>
 
     <div class="f"><span class="flab">Urgencia</span><div class="seg prio" id="segPrio" role="group" aria-label="Urgencia">
       <button type="button" data-v="Urgente">Urgente</button><button type="button" data-v="Importante">Importante</button><button type="button" data-v="Normal">Normal</button>
@@ -546,7 +563,6 @@ details.mats > summary:hover { background: var(--bg-surface); }
       <div class="f"><label for="t_hora">Hora <span class="opt">(opcional)</span></label><input id="t_hora" type="time"></div>
       <div class="f wide"><label for="t_inicio">Desde <span class="opt">(opcional)</span></label><input id="t_inicio" type="date"></div>
     </div>
-    <div class="f"><label for="t_responsable">Responsable</label><select id="t_responsable"></select></div>
 
     <div class="quick" id="quickActions">
       <a class="qa wa" id="qaWhats" href="#" target="_blank" rel="noopener" hidden></a>
@@ -555,14 +571,24 @@ details.mats > summary:hover { background: var(--bg-surface); }
       <span class="qa-hint" id="qaHint"></span>
     </div>
 
-    <section class="mine" id="mineView" aria-live="polite">
-      <div class="mine-head"><span class="mine-title">Entregable</span><span class="mine-state" id="mineState">Pendiente</span></div>
-      <div id="mineBody"></div>
-    </section>
-    <div class="matview" id="matView" hidden>
-      <span class="matview-title">Recursos para esta asignación</span>
-      <div class="matlinks" id="matLinks"></div>
-    </div>
+    <details class="mats" id="detBox">
+      <summary><span class="mats-title">Detalles</span><span class="mats-count" id="detSummary"></span></summary>
+      <div class="mats-body">
+        <div class="grid2">
+          <div class="f"><label for="t_ambito">Ámbito</label>
+            <select id="t_ambito"><option>Desarrollo profesional</option><option>Personal</option></select></div>
+          <div class="f"><label for="t_categoria" id="lblCategoria">Materia</label><select id="t_categoria"></select></div>
+          <div class="f"><label for="t_tipo">Tipo</label><select id="t_tipo"></select></div>
+          <div class="f"><label for="t_estado">Estado</label><select id="t_estado"><option value="To Do">Por hacer</option><option value="Doing">En curso</option><option value="Done">Hecho</option></select></div>
+        </div>
+        <div class="grid2" id="instBox">
+          <div class="f"><label for="t_inst1">Institución / plataforma</label><select id="t_inst1"></select></div>
+          <div class="f"><label for="t_inst2">Segunda <span class="opt">(opcional)</span></label><select id="t_inst2"></select></div>
+        </div>
+        <div class="f"><label for="t_responsable">Responsable</label><select id="t_responsable"></select></div>
+      </div>
+    </details>
+    <input type="hidden" id="t_instituciones">
 
     <div class="f"><label for="t_notas">Notas</label><textarea id="t_notas" rows="3" placeholder="Apuntes, dudas, pendientes…"></textarea></div>
     <div class="f mydesign">
@@ -573,7 +599,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     <details class="mats" id="matsBox">
       <summary><span class="mats-title">Agregar recursos</span><span class="mats-count" id="matsCount"></span></summary>
       <div class="mats-body">
-        <p class="mats-hint">PDFs, repos, cursos, carpetas de Drive. Lo que cargues aquí aparece arriba, en «Recursos para esta asignación».</p>
+        <p class="mats-hint">PDFs, repos, cursos, carpetas de Drive. Lo que cargues aquí aparece arriba, en «Recursos de la asignación».</p>
         <div id="matList" class="matlist"></div>
         <button class="btn ghost sm" id="btnAddMat" type="button">+ Agregar recurso</button>
       </div>
@@ -587,6 +613,17 @@ details.mats > summary:hover { background: var(--bg-surface); }
         <button class="btn primary" id="btnSave" type="submit">Guardar</button>
       </div>
     </div>
+  </form>
+</dialog>
+
+<dialog id="dlgFija">
+  <form method="dialog" id="frmFija">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill tipo" id="fjTipo"></span><span class="pill" id="fjCuando"></span></div>
+    <h2 id="fjTitulo"></h2>
+    <div class="fjgrid" id="fjInfo"></div>
+    <div class="quick" id="fjQuick"></div>
+    <p class="stamp" id="fjHint"></p>
+    <div class="dlg-actions"><div class="right"><button class="btn ghost" type="submit">Cerrar</button></div></div>
   </form>
 </dialog>
 
@@ -611,14 +648,15 @@ details.mats > summary:hover { background: var(--bg-surface); }
 
   // Respaldo por si la hoja aún no manda las categorías (se reemplaza con lo que mande Apps Script).
   var AMBITOS_DEFAULT = {
-    Escuela: { prefijo: "ESC-",
+    "Desarrollo profesional": { prefijo: "DP-",
       categorias: ["Algoritmos y Estructura de Datos", "Programación para Ciencia de Datos", "Introducción a la Ciencia de Datos", "Ética y Legalidad",
-                   "Nube", "Framework", "UX/UI", "Python", "C", "FrontEnd", "BackEnd"],
-      tipos: ["Tarea", "Práctica", "Estudio", "Curso", "Workshop", "Certificación", "Recordatorio", "Examen", "Nota"],
+                   "Matemáticas", "Inglés", "Nube", "Framework", "UX/UI", "Python", "C", "FrontEnd", "BackEnd"],
+      tipos: ["Tarea", "Práctica", "Estudio", "Curso", "Workshop", "Certificación", "Evento", "Recordatorio", "Examen", "Nota"],
       instituciones: ["ESCOM", "EBAC", "Google", "AWS", "Oracle", "FinOps", "Udemy", "Domestika", "Código Facilito", "Platzi", "DataCamp"] },
-    Personal: { prefijo: "PER-", categorias: ["IMSS", "Jandy", "Familia", "Pagos"], tipos: ["Recordatorio", "Evento", "Cita", "Encargo"], instituciones: [] }
+    Personal: { prefijo: "PER-", categorias: ["IMSS", "Salud", "Jandy", "Familia", "Pagos"], tipos: ["Recordatorio", "Evento", "Cita", "Encargo"], instituciones: [] }
   };
-  var CAT_LABEL = { Escuela: "Materia", Personal: "Categoría" };
+  var DP = "Desarrollo profesional";
+  var CAT_LABEL = { "Desarrollo profesional": "Materia", Personal: "Categoría" };
   var CAT_COLORS = ["#9DB4CF", "#7FB89A", "#CDB08A", "#B79CC9", "#D9928B", "#8FC7C2", "#C9C27F", "#9FA8DA", "#E0A07A", "#A3C98F", "#C99FB7"];
   var SHORT = { "Algoritmos y Estructura de Datos": "AED", "Programación para Ciencia de Datos": "PCD",
                 "Introducción a la Ciencia de Datos": "ICD", "Ética y Legalidad": "Ética" };
@@ -677,11 +715,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
     function stamp() { return ymd(0) + " " + new Date().toTimeString().slice(0, 5); }
     var s = stamp();
     var rows = [
-      ["ESC-001", "Escuela", "Programación para Ciencia de Datos", "Práctica", "Práctica 3 de PCD", "", "Doing", "Normal", 0, "", "", "ESCOM"],
-      ["ESC-002", "Escuela", "Nube", "Certificación", "Google Cloud Engineer", "Ruta de Skills Boost y examen de práctica.", "To Do", "Urgente", 16, "", "", "Google"],
-      ["ESC-003", "Escuela", "Algoritmos y Estructura de Datos", "Estudio", "Ponerme al día en AED", "Pilas, colas y listas en C.", "To Do", "Urgente", "", "", 0, "ESCOM"],
-      ["ESC-004", "Escuela", "UX/UI", "Certificación", "UX-UI EBAC", "Avanzar hasta UX Writing.", "To Do", "Normal", 21, "", -1, "EBAC"],
-      ["ESC-005", "Escuela", "Nube", "Certificación", "FinOps Practitioner", "", "To Do", "Importante", 22, "", "", "FinOps"],
+      ["DP-001", DP, "Programación para Ciencia de Datos", "Práctica", "Práctica 3 de PCD", "", "Doing", "Normal", 0, "", "", "ESCOM"],
+      ["DP-002", DP, "Nube", "Certificación", "Google Cloud Engineer", "Ruta de Skills Boost y examen de práctica.", "To Do", "Urgente", 16, "", "", "Google"],
+      ["DP-003", DP, "Algoritmos y Estructura de Datos", "Estudio", "Ponerme al día en AED", "Pilas, colas y listas en C.", "To Do", "Urgente", "", "", 0, "ESCOM"],
+      ["DP-004", DP, "UX/UI", "Certificación", "UX-UI EBAC", "Avanzar hasta UX Writing.", "To Do", "Normal", 21, "", -1, "EBAC"],
+      ["DP-005", DP, "Nube", "Certificación", "FinOps Practitioner", "", "To Do", "Importante", 22, "", "", "FinOps"],
       ["PER-001", "Personal", "IMSS", "Cita", "Cita IMSS CMN Siglo XXI", "Medicamento Hemato CMN XXI", "To Do", "Normal", 18, "08:00", "", ""],
       ["PER-002", "Personal", "Pagos", "Recordatorio", "Pagar internet", "", "To Do", "Urgente", 1, "", "", ""]
     ];
@@ -706,11 +744,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
       [5, "18:30", "20:00", "2AV1\nA203 - ETICA Y LEGALIDAD\nEdif: 1 - Salón: 111"]
     ].map(function (r) { return { dia: r[0], inicio: r[1], fin: r[2], texto: r[3] }; });
     var plan = [
-      ["ESC-002", "Google Cloud Engineer", "L,J,S", "08:00", "10:30", ymd(-3), ymd(16)],
-      ["ESC-002", "Google Cloud Engineer", "M,X,V", "08:30", "10:30", ymd(-3), ymd(16)],
-      ["ESC-003", "AED: ponerme al día", "L,J,S,D", "11:00", "13:00", ymd(0), ""],
-      ["ESC-003", "AED: ponerme al día", "M,V", "14:30", "16:30", ymd(0), ""],
-      ["ESC-004", "UX-UI EBAC", "Diario", "21:30", "22:15", ymd(-1), ymd(21)]
+      ["DP-002", "Google Cloud Engineer", "L,J,S", "08:00", "10:30", ymd(-3), ymd(16)],
+      ["DP-002", "Google Cloud Engineer", "M,X,V", "08:30", "10:30", ymd(-3), ymd(16)],
+      ["DP-003", "AED: ponerme al día", "L,J,S,D", "11:00", "13:00", ymd(0), ""],
+      ["DP-003", "AED: ponerme al día", "M,V", "14:30", "16:30", ymd(0), ""],
+      ["DP-004", "UX-UI EBAC", "Diario", "21:30", "22:15", ymd(-1), ymd(21)]
     ].map(function (r) { return { id: r[0], actividad: r[1], dias: r[2], inicio: r[3], fin: r[4], desde: r[5], hasta: r[6], notas: "" }; });
     var calendario = [
       { evento: "Periodo de clases", inicio: ymd(-80), fin: ymd(39), tipo: "Clases", notas: "" },
@@ -718,12 +756,20 @@ details.mats > summary:hover { background: var(--bg-surface); }
       { evento: "Registro de evaluación ordinaria", inicio: ymd(32), fin: ymd(36), tipo: "Evaluación", notas: "" },
       { evento: "Vacaciones", inicio: ymd(42), fin: ymd(52), tipo: "Vacaciones", notas: "" }
     ];
+    var fijas = [
+      ["Despertar y meditar", "Rutina", "M,X,J,V,S,D", "", "06:00", "06:20", "", 0], ["Desayuno", "Comida", "Diario", "", "06:30", "", "", 0],
+      ["Almuerzo", "Comida", "Diario", "", "11:00", "", "", 0], ["Comida", "Comida", "Diario", "", "15:00", "", "", 0],
+      ["Merienda", "Comida", "Diario", "", "19:00", "", "", 0], ["Cena ligera", "Comida", "Diario", "", "22:00", "", "", 0],
+      ["Medicamento", "Medicamento", "Diario", "", "22:00", "", "", 0], ["Leer", "Rutina", "Diario", "", "23:15", "23:30", "", 0],
+      ["Deportivo", "Deporte", "S,D", "", "07:00", "10:00", "Deportivo", 30], ["Pago de tarjetas", "Pago", "", "1", "", "", "", ""],
+      ["Ejercicio", "Deporte", "M,X", "", "20:15", "21:15", "", 0]
+    ].map(function (r) { return { actividad: r[0], tipo: r[1], dias: r[2], diaMes: r[3], inicio: r[4], fin: r[5], lugar: r[6], aviso: r[7], desde: "", hasta: "", excepto: "", notas: "" }; });
     var recursos = [
-      { etiqueta: "Repo ProgramacionLCD", enlace: "https://github.com/", notas: "Ejemplo", ambito: "Escuela", categoria: "Programación para Ciencia de Datos" },
+      { etiqueta: "Repo ProgramacionLCD", enlace: "https://github.com/", notas: "Ejemplo", ambito: DP, categoria: "Programación para Ciencia de Datos" },
       { etiqueta: "Citas IMSS digital", enlace: "https://www.imss.gob.mx/", notas: "", ambito: "Personal", categoria: "IMSS" }
     ];
     function board() { return { ok: true, tasks: JSON.parse(JSON.stringify(tasks)), team: [{ nombre: "Irvin", color: "#E5E5E5" }],
-      recursos: recursos.slice(), ambitos: AMBITOS_DEFAULT, horario: horario, plan: plan, calendario: calendario, miWhatsapp: "", serverTime: stamp() }; }
+      recursos: recursos.slice(), ambitos: AMBITOS_DEFAULT, horario: horario, plan: plan, calendario: calendario, fijas: fijas, miWhatsapp: "", serverTime: stamp() }; }
     function wait(v) { return new Promise(function (r) { setTimeout(function () { r(v); }, 150); }); }
     return {
       getBoard: function () { return wait(board()); },
@@ -732,7 +778,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
         var found = tasks.filter(function (x) { return x.id === t.id; })[0];
         if (found) Object.assign(found, t, { actualizado: stamp(), actualizadoPor: user });
         else {
-          var pre = (AMBITOS_DEFAULT[t.ambito] || AMBITOS_DEFAULT.Escuela).prefijo;
+          var pre = (AMBITOS_DEFAULT[t.ambito] || AMBITOS_DEFAULT[DP]).prefijo;
           var max = tasks.reduce(function (m, x) { return x.id.indexOf(pre) === 0 ? Math.max(m, parseInt(x.id.slice(pre.length), 10) || 0) : m; }, 0);
           tasks.push(Object.assign({}, t, { id: pre + pad(max + 1).padStart(3, "0"), creado: stamp(), actualizado: stamp(), actualizadoPor: user }));
         }
@@ -754,12 +800,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
   };
 
   /* ------------ estado ------------ */
-  var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], ambitos: AMBITOS_DEFAULT, miWhatsapp: "",
-                ambito: "Escuela", f: { cat: "", tipo: "", inst: "", prio: "" }, q: "", openPop: "",
+  var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], fijas: [], ambitos: AMBITOS_DEFAULT, miWhatsapp: "",
+                ambito: DP, f: { cat: "", tipo: "", inst: "", prio: "" }, q: "", openPop: "",
                 view: "board", calMode: "week", calDate: today0(), busy: 0, dragging: false };
   var $ = function (id) { return document.getElementById(id); };
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
-  state.ambito = store("irvin.ambito") === "Personal" ? "Personal" : "Escuela";
+  state.ambito = store("irvin.ambito") === "Personal" ? "Personal" : DP;
   state.view = store("irvin.view") === "cal" ? "cal" : "board";
   state.calMode = store("irvin.calMode") || (window.innerWidth < 700 ? "day" : "week");
   if (["month", "week", "day"].indexOf(state.calMode) === -1) state.calMode = "week";
@@ -770,7 +816,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function conf(amb) { var c = state.ambitos[amb] || AMBITOS_DEFAULT[amb] || AMBITOS_DEFAULT.Escuela; c.instituciones = c.instituciones || []; return c; }
+  function conf(amb) { var c = state.ambitos[amb] || AMBITOS_DEFAULT[amb] || AMBITOS_DEFAULT[DP]; c.instituciones = c.instituciones || []; return c; }
   function catColor(amb, cat) { var i = conf(amb).categorias.indexOf(cat); return i > -1 ? CAT_COLORS[i % CAT_COLORS.length] : "#6B6B6B"; }
   function instList(t) { return String(t.instituciones || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean); }
   function me() { return (state.team[0] && state.team[0].nombre) || "Irvin"; }
@@ -789,7 +835,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
     state.horario = res.horario || [];
     state.plan = res.plan || [];
     state.calendario = res.calendario || [];
-    if (res.ambitos && res.ambitos.Escuela && res.ambitos.Personal) state.ambitos = res.ambitos;
+    if (res.ambitos && res.ambitos[DP] && res.ambitos.Personal) state.ambitos = res.ambitos;
+    state.tasks.forEach(function (t) { if (t.ambito === "Escuela" || !state.ambitos[t.ambito]) t.ambito = /^PER-/i.test(t.id) ? "Personal" : DP; });
+    state.fijas = res.fijas || [];
     state.miWhatsapp = res.miWhatsapp || "";
     setSync("", (MODE === "live" ? "Sincronizado · " : "Modo demo · ") + (res.serverTime || "").slice(11));
     render();
@@ -867,28 +915,14 @@ details.mats > summary:hover { background: var(--bg-surface); }
   }
 
   function renderHeader() {
-    $("scopeName").textContent = state.view === "cal" ? "Calendario" : state.ambito;
     Array.prototype.forEach.call($("scopeSwitch").querySelectorAll("button"), function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.ambito === state.ambito));
     });
-    ["Escuela", "Personal"].forEach(function (a) {
-      var n = state.tasks.filter(function (t) { return t.ambito === a && t.estado !== "Done"; }).length;
-      $("cnt" + a).textContent = n ? String(n) : "";
+    [[DP, "cntDP"], ["Personal", "cntPersonal"]].forEach(function (a) {
+      var n = state.tasks.filter(function (t) { return t.ambito === a[0] && t.estado !== "Done"; }).length;
+      $(a[1]).textContent = n ? String(n) : "";
     });
-    var pool = state.view === "cal" ? state.tasks : inScope();
-    var upcoming = pool.filter(function (t) { return t.estado !== "Done" && t.fecha; })
-      .sort(function (a, b) { return (a.fecha + (a.hora || "99")) < (b.fecha + (b.hora || "99")) ? -1 : 1; });
-    var late = upcoming.filter(function (t) { return daysLeft(t.fecha) < 0; });
-    var nxt = upcoming.filter(function (t) { return daysLeft(t.fecha) >= 0; })[0];
-    var html;
-    if (nxt) {
-      var dl = daysLeft(nxt.fecha);
-      var what = "<strong>" + esc(nxt.tipo) + "</strong> · " + esc(nxt.titulo);
-      html = dl === 0 ? "<b>Hoy</b><span>" + (nxt.hora ? esc(nxt.hora) + " · " : "") + what + "</span>"
-           : "<b>" + dl + "</b><span>" + (dl === 1 ? "día para " : "días para ") + what + "</span>";
-    } else html = "<b>✓</b><span>Nada con fecha pendiente</span>";
-    if (late.length) html += '<span style="color:var(--color-error)">' + late.length + (late.length === 1 ? " vencida" : " vencidas") + "</span>";
-    $("next").innerHTML = html;
+    tick();
 
     var all = inScope(), total = all.length || 1, c = { "To Do": 0, Doing: 0, Done: 0 };
     all.forEach(function (t) { c[t.estado] = (c[t.estado] || 0) + 1; });
@@ -901,6 +935,16 @@ details.mats > summary:hover { background: var(--bg-surface); }
     }).join("");
   }
 
+
+  /* ------------ reloj CDMX ------------ */
+  var fmtHora = new Intl.DateTimeFormat("es-MX", { timeZone: "America/Mexico_City", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  var fmtFecha = new Intl.DateTimeFormat("es-MX", { timeZone: "America/Mexico_City", weekday: "long", day: "numeric", month: "long" });
+  function tick() {
+    var now = new Date(), p = fmtHora.formatToParts(now), get = function (k) { return (p.filter(function (x) { return x.type === k; })[0] || {}).value || "00"; };
+    $("clock").innerHTML = "<b>" + get("hour") + ":" + get("minute") + "<small>" + get("second") + "</small></b><span>" + esc(fmtFecha.format(now).replace(/^./, function (c) { return c.toUpperCase(); })) + " · CDMX</span>";
+  }
+  setInterval(tick, 1000);
+
   /* ------------ filtros plegables ------------ */
   var ICON_CHEV = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg>';
   function filterDefs() {
@@ -908,7 +952,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var defs = [
       { key: "cat", label: CAT_LABEL[state.ambito] || "Categoría", all: "Todas", opts: cf.categorias, color: true },
       { key: "tipo", label: "Tipo", all: "Todos", opts: cf.tipos },
-      { key: "inst", label: "Escuela", all: "Todas", opts: cf.instituciones },
+      { key: "inst", label: "Institución", all: "Todas", opts: cf.instituciones },
       { key: "prio", label: "Urgencia", all: "Todas", opts: PRIOS, prio: true }
     ];
     return defs.filter(function (d) { return d.opts && d.opts.length; });
@@ -1015,23 +1059,28 @@ details.mats > summary:hover { background: var(--bg-surface); }
   }
 
   /* ------------ calendario ------------ */
-  var CAL_START = 6, CAL_END = 23; // horas visibles
-  function norm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
-  /** Saca materia y salón del texto de la celda del horario. */
+  var CAL_START = 5, CAL_END = 24; // horas visibles
+  var FIJA_COLORS = { clase: ["var(--cls)", "var(--cls-bg)"], deporte: ["var(--cls)", "var(--cls-bg)"], pago: ["var(--pay)", "var(--pay-bg)"],
+                      medicamento: ["var(--med)", "var(--med-bg)"], comida: ["var(--meal)", "rgba(95,208,58,.14)"] };
+  function fijaColor(tipo) { return FIJA_COLORS[norm(tipo)] || ["var(--rut)", "var(--rut-bg)"]; }
+  function norm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  /** Saca materia, grupo, profesor y salón del texto de la celda del horario. */
   function classInfo(h) {
     var txt = String(h.texto || ""), n = norm(txt), title = "", cat = "";
-    conf("Escuela").categorias.forEach(function (c) {
+    conf(DP).categorias.forEach(function (c) {
       if (cat) return;
       var toks = norm(c).split(/\s+/).filter(function (w) { return w.length > 3; });
       if (toks.length && toks.every(function (w) { return n.indexOf(w.slice(0, 6)) > -1; })) cat = c;
     });
+    var lines = txt.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var grupo = /^\d[A-Z]{2}\d/.test(lines[0] || "") ? lines[0].split(/\s+/)[0] : "";
+    var rest = lines.filter(function (l) { return !/^\d[A-Z]{2}\d$/.test(l) && !/Edif/i.test(l); });
+    var profe = cat && rest.length > 1 ? rest[rest.length - 1] : "";
+    if (cat && rest.length === 1) { var parts = rest[0].split(/\s{2,}/).filter(Boolean); if (parts.length > 2) profe = parts[parts.length - 1]; }
     if (cat) title = SHORT[cat] || cat;
-    else {
-      var lines = txt.split(/\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l && !/^\d[A-Z]{2}\d$/.test(l); });
-      title = (lines[0] || "Clase").split(/\s{2,}/).filter(Boolean).join(" · ");
-    }
+    else title = (rest[0] || "Clase").split(/\s{2,}/).filter(Boolean).join(" · ");
     var loc = /Edif:?\s*(\w+)\s*-\s*Sal[oó]n:?\s*(\w+)/i.exec(txt);
-    return { title: title, cat: cat, where: loc ? "Edif " + loc[1] + " · Salón " + loc[2] : "" };
+    return { title: title, cat: cat, grupo: grupo, profe: profe, where: loc ? "Edif " + loc[1] + " · Salón " + loc[2] : "" };
   }
   function ipnFor(ymd) { return state.calendario.filter(function (e) { return e.inicio <= ymd && ymd <= (e.fin || e.inicio); }); }
   function isOff(ymd) { return ipnFor(ymd).some(function (e) { return /descanso|vacaci/i.test(e.tipo); }); }
@@ -1040,24 +1089,41 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var inPeriod = !periods.length || periods.some(function (e) { return e.inicio <= ymd && ymd <= e.fin; });
     return inPeriod && !isOff(ymd);
   }
+  function excluded(list, ymd) { return String(list || "").split(/[,\s]+/).indexOf(ymd) > -1; }
+  function fijaToday(f, ymd, dow) {
+    if ((f.desde && ymd < f.desde) || (f.hasta && ymd > f.hasta) || excluded(f.excepto, ymd)) return false;
+    if (f.diaMes) {
+      var d = parseYMD(ymd), dia = d.getDate(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      return String(f.diaMes).split(/[,\s]+/).some(function (x) { return /[uú]lt/i.test(x) ? dia === last : (+x === dia || (+x > last && dia === last)); });
+    }
+    return diasSet(f.dias).indexOf(dow) > -1;
+  }
   function dayData(ymd) {
-    var d = parseYMD(ymd), dow = d.getDay(), timed = [], allDay = [];
+    var d = parseYMD(ymd), dow = d.getDay(), timed = [], allDay = [], marks = [], classes = hasClasses(ymd);
     ipnFor(ymd).forEach(function (e) {
       if (/^clases$/i.test(e.tipo)) return;
-      allDay.push({ kind: "ipn", title: e.evento, note: e.notas, b: "var(--ipn)", g: "var(--ipn-bg)" });
+      allDay.push({ kind: "ipn", title: e.evento, tipo: "Calendario IPN", info: e, b: "var(--ipn)", g: "var(--ipn-bg)" });
     });
-    if (hasClasses(ymd)) state.horario.forEach(function (h) {
+    if (classes) state.horario.forEach(function (h) {
       if (h.dia !== dow) return;
       var ci = classInfo(h);
-      timed.push({ kind: "class", title: ci.title, sub: ci.where, s: mins(h.inicio), e: mins(h.fin) });
+      timed.push({ kind: "class", title: ci.title, sub: ci.where, s: mins(h.inicio), e: mins(h.fin), tipo: "Clase", info: { h: h, ci: ci } });
+    });
+    (state.fijas || []).forEach(function (f) {
+      if (!fijaToday(f, ymd, dow)) return;
+      if (/^clase$/i.test(f.tipo) && !classes) return;
+      var c = fijaColor(f.tipo), s = mins(f.inicio), e = mins(f.fin), item = { title: f.actividad, tipo: f.tipo || "Rutina", info: f, b: c[0], g: c[1] };
+      if (s == null) allDay.push(Object.assign(item, { kind: "fixed", title: (/pago/i.test(f.tipo) ? "$ " : "") + f.actividad }));
+      else if (e == null || e <= s) marks.push(Object.assign(item, { kind: "mark", s: s, cls: /comida/i.test(f.tipo) ? "" : /medic/i.test(f.tipo) ? "med" : "rut" }));
+      else timed.push(Object.assign(item, { kind: "fixed" + (/traslado/i.test(f.tipo) ? " traslado" : ""), sub: f.inicio + "–" + f.fin + (f.lugar ? " · " + f.lugar : ""), s: s, e: e }));
     });
     state.plan.forEach(function (p) {
-      if ((p.desde && ymd < p.desde) || (p.hasta && ymd > p.hasta) || diasSet(p.dias).indexOf(dow) === -1) return;
+      if ((p.desde && ymd < p.desde) || (p.hasta && ymd > p.hasta) || excluded(p.excepto, ymd) || diasSet(p.dias).indexOf(dow) === -1) return;
       var t = p.id ? taskById(p.id) : null, c = PRIO_COLORS[(t && t.prioridad) || "Normal"] || PRIO_COLORS.Normal;
       var s = mins(p.inicio), e = mins(p.fin);
       if (s == null || e == null) return;
-      timed.push({ kind: "plan", title: p.actividad, sub: p.inicio + "–" + p.fin + (p.notas ? " · " + p.notas : ""), s: s, e: e, id: p.id,
-                   b: c[0], g: c[1], done: t && t.estado === "Done", prio: t ? PRIO_ORDER[t.prioridad] : 3 });
+      timed.push({ kind: "plan", title: p.actividad, sub: p.inicio + "–" + p.fin + (p.notas ? " · " + p.notas : ""), s: s, e: e, id: t ? p.id : "",
+                   tipo: "Bloque de estudio", info: p, b: c[0], g: c[1], done: t && t.estado === "Done" });
     });
     state.tasks.forEach(function (t) {
       var c = PRIO_COLORS[t.prioridad || "Normal"] || PRIO_COLORS.Normal;
@@ -1069,10 +1135,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
         allDay.push({ kind: "task", title: "▶ Empieza: " + t.titulo, id: t.id, b: c[0], g: "var(--bg-surface-2)" });
       }
     });
-    allDay.sort(function (a, b) { return (a.kind === "ipn" ? 0 : 1) - (b.kind === "ipn" ? 0 : 1); });
+    var rank = { ipn: 0, fixed: 1, task: 2 };
+    allDay.sort(function (a, b) { return (rank[a.kind] || 3) - (rank[b.kind] || 3); });
     timed.sort(function (a, b) { return a.s - b.s || (b.e - b.s) - (a.e - a.s); });
+    marks.sort(function (a, b) { return a.s - b.s; });
     var studyMin = timed.filter(function (x) { return x.kind === "plan" && !x.done; }).reduce(function (m, x) { return m + (x.e - x.s); }, 0);
-    return { allDay: allDay, timed: layout(timed), off: isOff(ymd), studyMin: studyMin };
+    return { ymd: ymd, allDay: allDay, timed: layout(timed), marks: marks, off: isOff(ymd), studyMin: studyMin };
   }
   /** Reparte eventos encimados en columnas. */
   function layout(items) {
@@ -1086,13 +1154,17 @@ details.mats > summary:hover { background: var(--bg-surface); }
     flush();
     return items;
   }
-  function chipHTML(x) {
+  // Cada evento dibujado se guarda aquí para abrir su ventanita al tocarlo.
+  var evReg = [];
+  function regEv(x, ymd) { x.ymd = ymd; evReg.push(x); return evReg.length - 1; }
+  function chipHTML(x, ymd) {
     return '<button type="button" class="chipev' + (x.done ? " done" : "") + '" style="--b:' + (x.b || "var(--border-strong)") + ";--g:" + (x.g || "var(--bg-surface-2)") + '"' +
-      (x.id ? ' data-task="' + esc(x.id) + '"' : "") + (x.note ? ' data-note="' + esc(x.note) + '"' : "") + ' title="' + esc(x.title) + '">' + esc(x.title) + "</button>";
+      (x.id ? ' data-task="' + esc(x.id) + '"' : ' data-ev="' + regEv(x, ymd) + '"') + ' title="' + esc(x.title) + '">' + esc(x.title) + "</button>";
   }
   function durTxt(m) { var h = Math.floor(m / 60), r = m % 60; return h ? h + " h" + (r ? " " + r : "") : r + " min"; }
 
   function renderCal() {
+    evReg = [];
     Array.prototype.forEach.call($("calMode").querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === state.calMode)); });
     var d = state.calDate;
     if (state.calMode === "month") return renderMonth(d);
@@ -1107,7 +1179,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       $("calTitle").textContent = DIAS_L[d.getDay()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + d.getDate() + " de " + MESES_L[d.getMonth()];
     }
     var tdy = ymdOf(today0()), data = days.map(function (x) { return dayData(ymdOf(x)); });
-    var H = (CAL_END - CAL_START) * 52;
+    var HP = 52, H = (CAL_END - CAL_START) * HP;
     var html = '<div class="calscroll"><div class="tgrid' + (n === 7 ? " week" : "") + '" style="--days:' + n + '">';
     html += '<div class="corner"></div>';
     days.forEach(function (x, i) {
@@ -1116,9 +1188,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
         (dd.studyMin ? " · " + durTxt(dd.studyMin) : "") + '</div><div class="dn">' + x.getDate() + "</div></div>";
     });
     html += '<div class="adlabel">Todo el día</div>';
-    data.forEach(function (dd) { html += '<div class="allday' + (dd.off ? " off" : "") + '">' + dd.allDay.map(chipHTML).join("") + "</div>"; });
+    data.forEach(function (dd) { html += '<div class="allday' + (dd.off ? " off" : "") + '">' + dd.allDay.map(function (x) { return chipHTML(x, dd.ymd); }).join("") + "</div>"; });
     html += '<div class="hours" style="height:' + H + 'px">';
-    for (var h = CAL_START + 1; h < CAL_END; h++) html += '<span style="top:' + ((h - CAL_START) * 52) + 'px">' + pad(h) + ":00</span>";
+    for (var h = CAL_START + 1; h < CAL_END; h++) html += '<span style="top:' + ((h - CAL_START) * HP) + 'px">' + pad(h) + ":00</span>";
     html += "</div>";
     var now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
     days.forEach(function (x, i) {
@@ -1127,22 +1199,24 @@ details.mats > summary:hover { background: var(--bg-surface); }
       dd.timed.forEach(function (ev) {
         var s = Math.max(ev.s, CAL_START * 60), e = Math.min(ev.e, CAL_END * 60);
         if (e <= s) return;
-        var top = (s - CAL_START * 60) / 60 * 52, hgt = Math.max((e - s) / 60 * 52 - 2, 18);
+        var top = (s - CAL_START * 60) / 60 * HP, hgt = Math.max((e - s) / 60 * HP - 2, 18);
         var w = 100 / ev.ncols, left = ev.col * w;
         var style = "top:" + top + "px;height:" + hgt + "px;left:calc(" + left + "% + 2px);width:calc(" + w + "% - 4px);" +
           (ev.kind !== "class" ? "--b:" + ev.b + ";--g:" + ev.g : "");
         html += '<button type="button" class="ev ' + ev.kind + (ev.done ? " done" : "") + '" style="' + style + '"' +
-          (ev.id ? ' data-task="' + esc(ev.id) + '"' : "") + ' data-info="' + esc(ev.title + (ev.sub ? " · " + ev.sub : "")) + '" title="' + esc(ev.title + (ev.sub ? "\n" + ev.sub : "")) + '">' +
+          (ev.id ? ' data-task="' + esc(ev.id) + '"' : ' data-ev="' + regEv(ev, y) + '"') + ' title="' + esc(ev.title + (ev.sub ? "\n" + ev.sub : "")) + '">' +
           "<b>" + esc(ev.title) + "</b>" + (hgt > 30 && ev.sub ? "<small>" + esc(ev.sub) + "</small>" : "") + "</button>";
       });
-      if (y === tdy && nowMin >= CAL_START * 60 && nowMin <= CAL_END * 60) html += '<div class="nowline" style="top:' + ((nowMin - CAL_START * 60) / 60 * 52) + 'px"></div>';
+      dd.marks.forEach(function (m) {
+        if (m.s < CAL_START * 60 || m.s > CAL_END * 60) return;
+        html += '<div class="mk ' + m.cls + '" style="top:' + ((m.s - CAL_START * 60) / 60 * HP) + 'px"><button type="button" data-ev="' + regEv(m, y) + '" title="' + esc(m.title + " · " + hm(m.s)) + '">' +
+          esc(hm(m.s) + " " + m.title) + "</button></div>";
+      });
+      if (y === tdy && nowMin >= CAL_START * 60 && nowMin <= CAL_END * 60) html += '<div class="nowline" style="top:' + ((nowMin - CAL_START * 60) / 60 * HP) + 'px"></div>';
       html += "</div>";
     });
     html += "</div></div>";
     $("calBody").innerHTML = html;
-    // arranca el scroll cerca de la hora actual (o 7:00)
-    var sc = $("calBody").querySelector(".calscroll");
-    if (sc && !renderCal._scrolled) { renderCal._scrolled = true; }
   }
   function renderMonth(d) {
     $("calTitle").textContent = MESES_L[d.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + d.getFullYear();
@@ -1155,20 +1229,85 @@ details.mats > summary:hover { background: var(--bg-surface); }
       var shown = chips.slice(0, 3);
       html += '<div class="mcell' + (x.getMonth() !== d.getMonth() ? " other" : "") + (y === tdy ? " today" : "") + (dd.off ? " off" : "") + '" data-day="' + y + '">' +
         '<div class="mnum"><b>' + x.getDate() + "</b>" + (dd.studyMin ? "<small>" + durTxt(dd.studyMin) + " estudio</small>" : "") + "</div>" +
-        shown.map(chipHTML).join("") + (chips.length > 3 ? '<span class="more">+' + (chips.length - 3) + " más</span>" : "") + "</div>";
+        shown.map(function (c) { return chipHTML(c, y); }).join("") + (chips.length > 3 ? '<span class="more">+' + (chips.length - 3) + " más</span>" : "") + "</div>";
     }
     $("calBody").innerHTML = html + "</div>";
   }
   $("calBody").addEventListener("click", function (ev) {
     var t = ev.target.closest("[data-task]");
     if (t) { var task = taskById(t.dataset.task); if (task) openForm(task); else toast("No encontré " + t.dataset.task + " en Tareas."); return; }
-    var info = ev.target.closest("[data-info]");
-    if (info) { toast(info.dataset.info); return; }
-    var note = ev.target.closest("[data-note]");
-    if (note) { toast(note.dataset.note || note.textContent); return; }
+    var e = ev.target.closest("[data-ev]");
+    if (e) { openFija(evReg[+e.dataset.ev]); return; }
     var day = ev.target.closest("[data-day]");
     if (day) { state.calDate = parseYMD(day.dataset.day); state.calMode = "day"; store("irvin.calMode", "day"); renderCal(); }
   });
+
+  /* ------------ ventanita de actividades fijas, clases y bloques ------------ */
+  var DIAS_N = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  function diasTxt(txt) {
+    var set = diasSet(txt);
+    if (set.length === 7) return "Todos los días";
+    return [1, 2, 3, 4, 5, 6, 0].filter(function (d) { return set.indexOf(d) > -1; }).map(function (d) { return DIAS_N[d]; }).join(", ").replace(/^./, function (c) { return c.toUpperCase(); });
+  }
+  function fechaCorta(ymd) { var d = parseYMD(ymd); return d ? d.getDate() + " " + MESES[d.getMonth()] + " " + d.getFullYear() : ""; }
+  var BYDAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+  function gcalRecurring(title, ymd, ini, fin, rule, details) {
+    var timed = mins(ini) != null && mins(fin) != null;
+    var dates = timed ? utcStamp(ymd, ini) + "/" + utcStamp(ymd, fin) : ymdCompact(parseYMD(ymd)) + "/" + ymdCompact(addDays(parseYMD(ymd), 1));
+    return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(title) + "&dates=" + dates +
+      (rule ? "&recur=" + encodeURIComponent("RRULE:" + rule) : "") + "&details=" + encodeURIComponent(details || "") + "&ctz=America/Mexico_City";
+  }
+  function untilRule(hasta) { return hasta ? ";UNTIL=" + hasta.replace(/-/g, "") + "T235959Z" : ""; }
+  function openFija(x) {
+    if (!x) return;
+    var rows = [], when = "", rule = "", ini = "", fin = "", title = x.title, tipo = x.tipo || "", notas = "", dl = function (k, v) { if (v) rows.push("<dt>" + esc(k) + "</dt><dd>" + esc(v) + "</dd>"); };
+    if (x.kind === "class") {
+      var h = x.info.h, ci = x.info.ci; ini = h.inicio; fin = h.fin; title = ci.cat || ci.title;
+      when = DIAS_N[h.dia].replace(/^./, function (c) { return c.toUpperCase(); }) + " · " + ini + "–" + fin;
+      dl("Horario", when); dl("Grupo", ci.grupo); dl("Profesor", ci.profe); dl("Lugar", ci.where);
+      dl("Aviso", "Te llega un recordatorio 10 min antes");
+      rule = "FREQ=WEEKLY;BYDAY=" + BYDAY[h.dia];
+      var per = state.calendario.filter(function (e) { return /^clases$/i.test(e.tipo) && e.inicio <= x.ymd && x.ymd <= e.fin; })[0];
+      if (per) { dl("Periodo", "Hasta el " + fechaCorta(per.fin)); rule += untilRule(per.fin); }
+    } else if (x.kind === "ipn") {
+      var e = x.info; dl("Fechas", e.inicio === e.fin ? fechaCorta(e.inicio) : fechaCorta(e.inicio) + " – " + fechaCorta(e.fin)); dl("Tipo", e.tipo); notas = e.notas;
+      when = e.tipo;
+    } else if (x.kind === "plan") {
+      var p = x.info; ini = p.inicio; fin = p.fin;
+      when = diasTxt(p.dias) + " · " + ini + "–" + fin;
+      dl("Horario", when); dl("Periodo", (p.desde ? "Del " + fechaCorta(p.desde) : "") + (p.hasta ? " al " + fechaCorta(p.hasta) : ""));
+      dl("Aviso", "Te llega un recordatorio al empezar"); notas = p.notas;
+      rule = "FREQ=WEEKLY;BYDAY=" + diasSet(p.dias).map(function (d) { return BYDAY[d]; }).join(",") + untilRule(p.hasta);
+    } else {
+      var f = x.info; ini = f.inicio; fin = f.fin; tipo = f.tipo || "Rutina"; notas = f.notas;
+      if (f.diaMes) {
+        when = "Cada mes, " + String(f.diaMes).split(/[,\s]+/).filter(Boolean).map(function (v) { return /[uú]lt/i.test(v) ? "el último día" : "el día " + v; }).join(" y ");
+        var md = String(f.diaMes).split(/[,\s]+/).filter(Boolean).map(function (v) { return /[uú]lt/i.test(v) ? "-1" : String(+v); }).join(",");
+        rule = "FREQ=MONTHLY;BYMONTHDAY=" + md + untilRule(f.hasta);
+      } else {
+        when = diasTxt(f.dias) + (ini ? " · " + ini + (fin ? "–" + fin : "") : "");
+        rule = "FREQ=WEEKLY;BYDAY=" + diasSet(f.dias).map(function (d) { return BYDAY[d]; }).join(",") + untilRule(f.hasta);
+      }
+      dl("Cuándo", when); dl("Lugar", f.lugar);
+      if (f.desde || f.hasta) dl("Periodo", (f.desde ? "Desde el " + fechaCorta(f.desde) : "") + (f.hasta ? (f.desde ? " hasta el " : "Hasta el ") + fechaCorta(f.hasta) : ""));
+      dl("Aviso", f.aviso === "" || f.aviso == null ? (ini ? "Sin recordatorio" : "Va en el resumen de la mañana") : (+f.aviso ? "Te llega " + f.aviso + " min antes" : "Te llega a la hora"));
+      if (f.excepto) dl("Excepto", f.excepto.split(/,\s*/).map(fechaCorta).join(", "));
+    }
+    var links = [];
+    var urls = String(notas || "").match(/https?:\/\/\S+/g) || [];
+    dl("Notas", String(notas || "").replace(/https?:\/\/\S+/g, "").replace(/[\s·|,:–-]+$/, "").trim());
+    $("fjTipo").textContent = tipo; $("fjCuando").textContent = fechaCorta(x.ymd);
+    $("fjTitulo").textContent = title;
+    $("fjInfo").innerHTML = rows.join("");
+    var msg = "*" + title + "*\n" + (when || fechaCorta(x.ymd)) + (notas ? "\n" + notas : "");
+    if (state.miWhatsapp) links.push('<a class="qa wa" target="_blank" rel="noopener" href="https://wa.me/' + state.miWhatsapp + "?text=" + encodeURIComponent(msg) + '">' + ICON_WA + "<span>Mandármelo por WhatsApp</span></a>");
+    if (x.kind !== "ipn" || x.info) links.push('<a class="qa" target="_blank" rel="noopener" href="' + esc(gcalRecurring(title, x.ymd, ini, fin, x.kind === "ipn" ? "" : rule, notas)) + '">' + ICON_CAL + "<span>" + (rule ? "Agregar a Google Calendar (se repite)" : "Agregar a Google Calendar") + "</span></a>");
+    urls.forEach(function (u) { links.push(linkActions("", u)); });
+    $("fjQuick").innerHTML = links.join("");
+    $("fjHint").textContent = x.kind === "class" ? "Las clases salen de la pestaña Horario de tu hoja." : x.kind === "plan" ? "Los bloques de estudio se editan en la pestaña Plan." :
+      x.kind === "ipn" ? "Viene de la pestaña Calendario IPN." : "Las actividades fijas se editan en la pestaña Fijas de tu hoja.";
+    $("dlgFija").showModal();
+  }
   $("calMode").addEventListener("click", function (ev) {
     var b = ev.target.closest("button[data-mode]"); if (!b) return;
     state.calMode = b.dataset.mode; store("irvin.calMode", state.calMode); renderCal();
@@ -1331,7 +1470,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var d = parseYMD(t.fecha); if (!d) return null;
     var timed = /^\d{1,2}:\d{2}$/.test(t.hora || "");
     var end = addDays(d, 1);
-    var details = [t.categoria ? (CAT_LABEL[t.ambito] || "Categoría") + ": " + t.categoria : "", t.instituciones ? "Escuela: " + t.instituciones : "",
+    var details = [t.categoria ? (CAT_LABEL[t.ambito] || "Categoría") + ": " + t.categoria : "", t.instituciones ? "Institución: " + t.instituciones : "",
       t.descripcion, t.notas ? "Notas: " + t.notas : "", isUrl(t.enlace) ? "Entregable: " + t.enlace : "", "Tablero: " + taskUrl(t.id)].filter(Boolean).join("\n\n");
     var title = (CAL_PREFIX[t.tipo] || t.tipo || "Pendiente") + ": " + t.titulo + (t.categoria ? " · " + (SHORT[t.categoria] || t.categoria) : "");
     return { timed: timed, start: timed ? utcStamp(t.fecha, t.hora) : ymdCompact(d), end: timed ? utcStamp(t.fecha, t.hora, 60) : ymdCompact(end),
@@ -1394,12 +1533,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var l = list.slice(); if (cur && l.indexOf(cur) === -1) l.push(cur);
     return (empty !== undefined ? '<option value="">' + esc(empty) + "</option>" : "") + l.map(function (o) { return "<option>" + esc(o) + "</option>"; }).join("");
   }
-  /** Llena Materia/Categoría, Tipo y Escuela según el ámbito; conserva valores que no estén en la lista (editados en la hoja). */
+  /** Llena Materia/Categoría, Tipo e Institución según el ámbito; conserva valores que no estén en la lista (editados en la hoja). */
   function fillScopeFields(amb, cat, tipo, insts) {
     var cf = conf(amb);
     $("lblCategoria").textContent = CAT_LABEL[amb] || "Categoría";
-    $("t_categoria").innerHTML = options(cf.categorias, cat);
-    $("t_categoria").value = cat || cf.categorias[0];
+    $("t_categoria").innerHTML = options(cf.categorias, cat, "— Sin " + (CAT_LABEL[amb] || "categoría").toLowerCase());
+    $("t_categoria").value = cat || "";
     $("t_tipo").innerHTML = options(cf.tipos, tipo);
     $("t_tipo").value = tipo || cf.tipos[0];
     insts = insts || [];
@@ -1461,7 +1600,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var amb = task ? task.ambito : state.ambito;
     var t = task || Object.assign({ ambito: amb, estado: "To Do", prioridad: state.f.prio || "Normal", responsable: me(),
                       categoria: state.f.cat, tipo: state.f.tipo, instituciones: state.f.inst }, preset || {});
-    $("dlgTitle").textContent = task ? task.id : (amb === "Escuela" ? "Nueva asignación" : "Nuevo pendiente");
+    $("dlgTitle").textContent = task ? task.id : (amb === DP ? "Nueva asignación" : "Nuevo pendiente");
     $("t_id").value = task ? task.id : "";
     $("t_ambito").value = amb;
     fillScopeFields(amb, t.categoria, t.tipo, instList(t));
@@ -1474,12 +1613,19 @@ details.mats > summary:hover { background: var(--bg-surface); }
     $("matsBox").open = false;
     if (task) parseMats(t.materiales).forEach(function (m) { addMatRow(m.label, m.url); });
     else syncAutoRecursos();
-    renderMatView(); renderQuick();
+    $("detBox").open = !task;
+    renderMatView(); renderQuick(); renderDetSummary();
     $("t_stamp").textContent = task ? "Creada: " + (task.creado || "—") + " · Última edición: " + (task.actualizado || "—") : "";
     $("btnDelete").hidden = !task; disarm();
     dlg.showModal();
     dlg.scrollTop = 0; if (!task) $("t_titulo").focus();
   }
+  function renderDetSummary() {
+    var est = { "To Do": "Por hacer", Doing: "En curso", Done: "Hecho" }[$("t_estado").value];
+    var cat = $("t_categoria").value, inst = [$("t_inst1").value, $("t_inst2").value].filter(Boolean).join(" + ");
+    $("detSummary").textContent = [$("t_ambito").value === DP ? "DP" : "Personal", SHORT[cat] || cat, $("t_tipo").value, est, inst].filter(Boolean).join(" · ");
+  }
+  $("detBox").addEventListener("change", renderDetSummary);
   function disarm() { var b = $("btnDelete"); b.classList.remove("armed"); b.textContent = "Borrar"; }
 
   function openFromHash() {
@@ -1606,7 +1752,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   load();
   setInterval(function () {
     if (MODE !== "live" || !loadedOnce || !$("gate").hidden) return;
-    if (!dlg.open && !dlgRecursos.open && !state.dragging && !state.busy && !state.openPop && document.visibilityState === "visible") load();
+    if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop && document.visibilityState === "visible") load();
   }, REFRESH_MS);
 })();
 </script>

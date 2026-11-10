@@ -1,6 +1,6 @@
-# Tablero personal · Irvin
+# Dame la Vida · tablero de Irvin
 
-Kanban para **escuela** y **vida**, hecho a partir del tablero de Creativity del SCD CDMX 2026.
+*Fake it till you make it.* Kanban y calendario para **desarrollo profesional** y **vida**, hecho a partir del tablero de Creativity del SCD CDMX 2026.
 Los datos viven en un Google Sheet; el tablero corre en Vercel.
 
 ```
@@ -15,8 +15,8 @@ La URL de Apps Script, la clave y tu número **nunca están en este repo**.
 
 | Ámbito   | Materias / categorías | Tipos | Escuela / plataforma (hasta 2) | IDs |
 |----------|-----------------------|-------|--------------------------------|-----|
-| Escuela  | Algoritmos y Estructura de Datos · Programación para Ciencia de Datos · Introducción a la Ciencia de Datos · Ética y Legalidad · Nube · Framework · UX/UI · Python · C · FrontEnd · BackEnd | Tarea · Práctica · Estudio · Curso · Workshop · Certificación · Recordatorio · Examen · Nota | ESCOM · EBAC · Google · AWS · Oracle · FinOps · Udemy · Domestika · Código Facilito · Platzi · DataCamp | `ESC-001` |
-| Personal | IMSS · Jandy · Familia · Pagos | Recordatorio · Evento · Cita · Encargo | — | `PER-001` |
+| Desarrollo profesional (DP) | Algoritmos y Estructura de Datos · Programación para Ciencia de Datos · Introducción a la Ciencia de Datos · Ética y Legalidad · Matemáticas · Inglés · Nube · Framework · UX/UI · Python · C · FrontEnd · BackEnd | Tarea · Práctica · Estudio · Curso · Workshop · Certificación · Evento · Recordatorio · Examen · Nota | ESCOM · EBAC · Google · AWS · Oracle · FinOps · Udemy · Domestika · Código Facilito · Platzi · DataCamp | `DP-001` |
+| Personal | IMSS · Salud · Jandy · Familia · Pagos | Recordatorio · Evento · Cita · Encargo | — | `PER-001` |
 
 Cada asignación lleva **ámbito + materia + tipo + urgencia** (Urgente / Importante / Normal), hasta dos escuelas o plataformas, fecha límite, hora y fecha de inicio opcionales.
 Ejemplo: *Certificación* de *Nube* en *AWS + Código Facilito*, *Urgente*, para el 10 de diciembre.
@@ -55,7 +55,8 @@ Si cambias `Code.gs`: **Implementar → Gestionar implementaciones → ✏️ �
 - **Equipo**: Nombre · Color. Solo estás tú (Irvin).
 - **Recursos**: Etiqueta · Enlace · Notas · Ámbito · Categoría. Salen en el botón **Recursos** y se precargan en cada asignación nueva del mismo ámbito y categoría. Ámbito o categoría vacíos = aplica a todo.
 - **Horario**: tu horario de clases tal cual (columna `HORA` con `07:00 - 08:30` y una columna por día). El calendario reconoce la materia y el salón.
-- **Plan**: bloques de estudio. ID (de la tarea) · Actividad · Días · Inicio · Fin · Desde · Hasta · Notas. Días acepta `Diario`, `L-V` o letras `L,M,X,J,V,S,D`. El color sale de la urgencia de la tarea ligada.
+- **Fijas**: tu rutina. Actividad · Tipo · Días · Día del mes · Inicio · Fin · Desde · Hasta · Excepto · Lugar · Notas · Aviso (min antes). Sin *Inicio* = todo el día (pagos); sin *Fin* = marca (comidas, medicamento). *Día del mes* acepta números y `último` (`15, último`). Tipo `Clase` se oculta en días sin clases.
+- **Plan**: bloques de estudio. ID (de la tarea) · Actividad · Días · Inicio · Fin · Desde · Hasta · Notas · Excepto (fechas en que no aplica, separadas por coma). Días acepta `Diario`, `L-V` o letras `L,M,X,J,V,S,D`. El color sale de la urgencia de la tarea ligada.
 - **Calendario IPN**: Evento · Inicio · Fin · Tipo · Notas. Tipo `Clases` marca el rango en que se muestra el horario; `Descanso` y `Vacaciones` ocultan las clases ese día.
 - **Plan UX EBAC**: módulos del curso con su fecha meta y una casilla de Hecho (solo vive en la hoja).
 
@@ -63,19 +64,34 @@ Si cambias `Code.gs`: **Implementar → Gestionar implementaciones → ✏️ �
 
 - **Escuela / Personal**: el selector de arriba cambia de tablero; se recuerda en tu navegador.
 - **Filtros plegables** por materia, tipo, escuela/plataforma y urgencia, más buscador.
-- **Calendario** (Mes / Semana / Día): clases del horario, bloques del Plan, fechas límite y calendario IPN. Toca un bloque para abrir su asignación; toca un día para verlo completo.
+- **Calendario** (Mes / Semana / Día): clases y deporte en azul, comidas como marcas verdes, rutina, pagos, bloques del Plan (color por urgencia: rojo, ámbar, verde), fechas límite y calendario IPN. Toca una asignación para editarla; toca una clase o actividad fija para ver su ventanita con detalles, WhatsApp y Google Calendar (repetido).
+- **Reloj** con la hora de Ciudad de México en el encabezado.
 - **Próximo pendiente** con días restantes y conteo de vencidas.
 - **Google Calendar**: con fecha, botón para agregarla (con hora si la pusiste) y `.ics` para otros calendarios, con recordatorio un día antes (y una hora antes si tiene hora).
 - **Mandármelo por WhatsApp**: abre tu chat contigo mismo con todo el detalle y el link a la asignación. También aparece al crear una nueva.
 - **Link directo**: `https://…vercel.app/#ESC-003` abre esa asignación.
 
-## Aviso automático diario (opcional)
+## Recordatorios a lo largo del día
 
-Para que te llegue un WhatsApp cada mañana (7:00) con lo vencido, lo de hoy, lo de mañana y tus bloques de estudio del día, sin abrir el tablero:
+El Apps Script revisa cada 5 minutos qué empieza pronto y te manda un mensaje:
 
-1. Saca tu apikey gratis en [callmebot.com](https://www.callmebot.com/blog/free-api-whatsapp-messages/) (sección WhatsApp: le mandas un mensaje de activación y te responde con la clave).
-2. Agrégala en las propiedades del script como `CALLMEBOT_APIKEY`.
-3. Ejecuta **`probarAviso`** para recibir uno de prueba y luego **`instalarAvisoDiario`**. Para apagarlo: **`quitarAvisoDiario`**.
+- **Al despertar**: el resumen del día (pagos, fechas límite, vencidas, clases y plan de estudio).
+- **Clases**: 10 min antes, para salir a tiempo.
+- **Actividades fijas**: según la columna *Aviso (min antes)* de la pestaña Fijas (vacía = sin aviso).
+- **Bloques del Plan**: al empezar. **Tareas con hora**: 1 h antes.
+- Lo que cae a la misma hora llega en un solo mensaje.
+
+Canales (propiedades del script):
+
+| Propiedad | Para qué |
+|-----------|----------|
+| `FORMSPREE_ENDPOINT` | Tu formulario, ej. `https://formspree.io/f/xxxx`. En Formspree activa el plugin **WhatsApp** en la pestaña *Workflow* del formulario. |
+| `FORMSPREE_LIMITE` | Envíos al mes antes de pausar Formspree. Por defecto 50 (plan gratis). Súbelo si tienes un plan de pago. |
+| `CALLMEBOT_APIKEY` | Opcional y gratis. Se usa si no hay Formspree o si ya se acabó el cupo del mes. |
+
+Un día normal son unos 15 mensajes (unos 450 al mes): el plan gratis de Formspree no alcanza, así que conviene CallMeBot como respaldo o un plan de pago.
+
+Funciones (▶ en el editor): **`probarRecordatorio`** manda un mensaje de prueba, **`verAvisosDeHoy`** lista en el registro lo que te llegaría hoy, **`instalarRecordatorios`** los activa y **`quitarRecordatorios`** los apaga.
 
 ## Desarrollo local
 

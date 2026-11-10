@@ -14,10 +14,13 @@
  *   1. Ejecuta crearHoja()       -> crea las pestañas con sus encabezados.
  *   2. Ejecuta generarSecreto()  -> copia la clave del registro a API_SECRET en Vercel.
  *
- * Tu WhatsApp NO va en este archivo (el repo puede ser público).
- * Va en Configuración del proyecto (⚙️) > Propiedades de la secuencia de comandos:
- *   MI_WHATSAPP       10 dígitos, ej. 55XXXXXXXX
- *   CALLMEBOT_APIKEY  (opcional) para el aviso automático diario, ver README
+ * Tu WhatsApp y tus llaves NO van en este archivo (el repo es público).
+ * Van en Configuración del proyecto (⚙️) > Propiedades de la secuencia de comandos:
+ *   MI_WHATSAPP         10 dígitos, ej. 55XXXXXXXX (botón «Mandármelo por WhatsApp»)
+ *   FORMSPREE_ENDPOINT  https://formspree.io/f/xxxx  (recordatorios por el plugin de WhatsApp de Formspree)
+ *   FORMSPREE_LIMITE    (opcional) envíos al mes antes de pausar Formspree; por defecto 50 (plan gratis)
+ *   CALLMEBOT_APIKEY    (opcional) canal gratis de WhatsApp; se usa si no hay Formspree o si se acabó el cupo
+ * Recordatorios a lo largo del día: ejecuta instalarRecordatorios() una vez (ver README).
  */
 
 const SHEET_TAREAS = 'Tareas';
@@ -26,32 +29,36 @@ const SHEET_RECURSOS = 'Recursos';
 const SHEET_HORARIO = 'Horario';
 const SHEET_PLAN = 'Plan';
 const SHEET_CAL_IPN = 'Calendario IPN';
+const SHEET_FIJAS = 'Fijas';
 const TZ = 'America/Mexico_City';
 
 /* ================== CATEGORÍAS (edítalas aquí si cambian) ================== */
 // Cada ámbito tiene su lista de categorías (materias / áreas de tu vida), su lista de tipos
-// y, en Escuela, la lista de escuelas / plataformas (cada asignación lleva hasta dos).
+// y, en Desarrollo profesional, la lista de escuelas / plataformas (cada asignación lleva hasta dos).
 // Una tarea siempre lleva: Ámbito + Categoría + Tipo (+ Urgencia).
 const AMBITOS = {
-  Escuela: {
-    prefijo: 'ESC-',
+  'Desarrollo profesional': {
+    prefijo: 'DP-',
     categorias: ['Algoritmos y Estructura de Datos', 'Programación para Ciencia de Datos',
-                 'Introducción a la Ciencia de Datos', 'Ética y Legalidad',
+                 'Introducción a la Ciencia de Datos', 'Ética y Legalidad', 'Matemáticas', 'Inglés',
                  'Nube', 'Framework', 'UX/UI', 'Python', 'C', 'FrontEnd', 'BackEnd'],
     tipos: ['Tarea', 'Práctica', 'Estudio', 'Curso', 'Workshop', 'Certificación',
-            'Recordatorio', 'Examen', 'Nota'],
+            'Evento', 'Recordatorio', 'Examen', 'Nota'],
     instituciones: ['ESCOM', 'EBAC', 'Google', 'AWS', 'Oracle', 'FinOps', 'Udemy',
                     'Domestika', 'Código Facilito', 'Platzi', 'DataCamp']
   },
   Personal: {
     prefijo: 'PER-',
-    categorias: ['IMSS', 'Jandy', 'Familia', 'Pagos'],
+    categorias: ['IMSS', 'Salud', 'Jandy', 'Familia', 'Pagos'],
     tipos: ['Recordatorio', 'Evento', 'Cita', 'Encargo'],
     instituciones: []
   }
 };
 const MAX_INSTITUCIONES = 2;
 const AMBITO_NAMES = Object.keys(AMBITOS);
+const AMBITO_DP = 'Desarrollo profesional';
+/** Nombres viejos que siguen funcionando si aparecen en la hoja. */
+const AMBITO_ALIAS = { Escuela: AMBITO_DP, DP: AMBITO_DP };
 
 // Las columnas de "Tareas" se ubican por el TEXTO del encabezado (fila 1), no por su posición.
 // Cada campo acepta varios nombres de encabezado (el primero es el que crea crearHoja()).
@@ -99,9 +106,10 @@ function crearHoja() {
   const tareas = ensureSheet_(ss, SHEET_TAREAS, KEYS.map(k => HEADERS[k][0]));
   ensureSheet_(ss, SHEET_EQUIPO, ['Nombre', 'Color'], [[RESPONSABLE_DEFAULT, '#E5E5E5']]);
   ensureSheet_(ss, SHEET_RECURSOS, ['Etiqueta', 'Enlace', 'Notas', 'Ámbito', 'Categoría'], [
-    ['Repo de prácticas PCD', 'https://github.com/', 'Cambia este link por el de tu repo', 'Escuela', 'Programación para Ciencia de Datos']
+    ['Repo de prácticas PCD', 'https://github.com/', 'Cambia este link por el de tu repo', AMBITO_DP, 'Programación para Ciencia de Datos']
   ]);
-  ensureSheet_(ss, SHEET_PLAN, ['ID', 'Actividad', 'Días', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Notas']);
+  ensureSheet_(ss, SHEET_PLAN, ['ID', 'Actividad', 'Días', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Notas', 'Excepto']);
+  ensureSheet_(ss, SHEET_FIJAS, ['Actividad', 'Tipo', 'Días', 'Día del mes', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Excepto', 'Lugar', 'Notas', 'Aviso (min antes)']);
   ensureSheet_(ss, SHEET_CAL_IPN, ['Evento', 'Inicio', 'Fin', 'Tipo', 'Notas']);
 
   // Menús desplegables en la hoja (por si editas directo ahí)
@@ -116,7 +124,7 @@ function crearHoja() {
   if (cols.estado) tareas.getRange(2, cols.estado, rows).setDataValidation(list(ESTADOS));
   if (cols.prioridad) tareas.getRange(2, cols.prioridad, rows).setDataValidation(list(PRIORIDADES));
   tareas.setFrozenRows(1);
-  Logger.log('Listo. Pestañas: ' + [SHEET_TAREAS, SHEET_EQUIPO, SHEET_RECURSOS, SHEET_PLAN, SHEET_CAL_IPN].join(', '));
+  Logger.log('Listo. Pestañas: ' + [SHEET_TAREAS, SHEET_EQUIPO, SHEET_RECURSOS, SHEET_PLAN, SHEET_CAL_IPN, SHEET_FIJAS].join(', '));
 }
 
 function ensureSheet_(ss, name, headers, seed) {
@@ -162,6 +170,7 @@ function doPost(e) {
 function getBoard_() {
   return { ok: true, tasks: readTasks_(), team: getTeam_(), recursos: getRecursos_(), ambitos: AMBITOS,
            horario: optional_(getHorario_), plan: optional_(getPlan_), calendario: optional_(getCalendarioIPN_),
+           fijas: optional_(getFijas_),
            estados: ESTADOS, prioridades: PRIORIDADES, miWhatsapp: myPhone_(), serverTime: now_() };
 }
 
@@ -179,7 +188,8 @@ function readTasks_() {
     const t = {};
     KEYS.forEach(k => t[k] = cols[k] ? fmt_(k, r[cols[k] - 1]) : '');
     if (ESTADOS.indexOf(t.estado) === -1) t.estado = 'To Do';
-    if (!AMBITOS[t.ambito]) t.ambito = /^PER-/i.test(t.id) ? 'Personal' : 'Escuela';
+    if (AMBITO_ALIAS[t.ambito]) t.ambito = AMBITO_ALIAS[t.ambito];
+    if (!AMBITOS[t.ambito]) t.ambito = /^PER-/i.test(t.id) ? 'Personal' : AMBITO_DP;
     tasks.push(t);
   });
   return tasks;
@@ -189,11 +199,11 @@ function saveTask_(task, user) {
   if (!task || !String(task.titulo || '').trim()) throw new Error('La tarea necesita un título.');
   return withLock_(() => {
     const sh = sheet_(SHEET_TAREAS);
-    const ambito = AMBITOS[task.ambito] ? task.ambito : 'Escuela';
+    const ambito = AMBITOS[task.ambito] ? task.ambito : (AMBITO_ALIAS[task.ambito] || AMBITO_DP);
     const conf = AMBITOS[ambito];
     const values = {
       ambito: ambito,
-      categoria: conf.categorias.indexOf(task.categoria) > -1 ? task.categoria : clean_(task.categoria).slice(0, 80),
+      categoria: conf.categorias.indexOf(task.categoria) > -1 ? task.categoria : clean_(task.categoria).slice(0, 80),  // vacío = sin categoría
       tipo: conf.tipos.indexOf(task.tipo) > -1 ? task.tipo : conf.tipos[0],
       titulo: clean_(task.titulo).slice(0, 200),
       descripcion: clean_(task.descripcion).slice(0, 2000),
@@ -251,51 +261,199 @@ function deleteTask_(id) {
   });
 }
 
-/* ===================== AVISO AUTOMÁTICO A TU WHATSAPP ===================== */
-// Opcional. Usa CallMeBot (gratis) para mandarte un WhatsApp cada mañana con lo
-// vencido, lo de hoy y lo de mañana. Necesita MI_WHATSAPP y CALLMEBOT_APIKEY en
-// las propiedades del script (ver README). Luego ejecuta instalarAvisoDiario() una vez.
+/* ======================= RECORDATORIOS A TU WHATSAPP ======================= */
+// Un disparador revisa cada 5 minutos qué empieza pronto (clases, actividades fijas,
+// bloques del Plan y tareas con hora) y te manda un mensaje en el momento indicado.
+// Canal: Formspree (plugin de WhatsApp del formulario) y, si no hay o se acabó el cupo,
+// CallMeBot. Ver README para configurarlos.
 
-/** Crea (o reemplaza) el disparador que corre avisoDiario() todos los días a las 7 a. m. */
-function instalarAvisoDiario() {
-  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'avisoDiario') ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('avisoDiario').timeBased().everyDays(1).atHour(7).inTimezone(TZ).create();
-  Logger.log('Aviso diario instalado: todos los días a las 7:00 (hora CDMX).');
+const AVISO_CLASE_MIN = 10;   // clases: 10 min antes (para salir a tiempo)
+const AVISO_PLAN_MIN = 0;     // bloques de estudio: al empezar
+const AVISO_TAREA_MIN = 60;   // tareas con hora: 1 h antes
+const RECORDATORIO_CADA_MIN = 5;
+
+/** Instala el disparador cada 5 min (y quita el aviso diario viejo si existía). Ejecútala una vez. */
+function instalarRecordatorios() {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (['recordatorios', 'avisoDiario'].indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('recordatorios').timeBased().everyMinutes(RECORDATORIO_CADA_MIN).create();
+  PropertiesService.getScriptProperties().setProperty('RECORDATORIOS_ULTIMO', String(Date.now()));
+  Logger.log('Recordatorios activos: revisa cada ' + RECORDATORIO_CADA_MIN + ' min.');
+  const n = Object.keys(eventosConAviso_(hoy_()).reduce((o, e) => (o[e.aviso] = 1, o), {})).length;
+  Logger.log('Hoy te llegarían ' + n + ' mensajes (unos ' + n * 30 + ' al mes). El plan gratis de Formspree trae 50 al mes.');
 }
 
-/** Quita el aviso diario. */
-function quitarAvisoDiario() {
-  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'avisoDiario') ScriptApp.deleteTrigger(t); });
-  Logger.log('Aviso diario desactivado.');
+/** Apaga los recordatorios. */
+function quitarRecordatorios() {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (['recordatorios', 'avisoDiario'].indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
+  });
+  Logger.log('Recordatorios apagados.');
 }
 
-/** Manda el resumen ahora mismo (sirve para probar). */
-function probarAviso() { avisoDiario(true); }
+/** Lista en el registro los avisos de hoy, sin mandar nada. */
+function verAvisosDeHoy() {
+  eventosConAviso_(hoy_()).forEach(e => Logger.log(e.aviso + '  ' + e.texto.split('\n')[0]));
+}
 
-function avisoDiario(forzar) {
-  const tasks = readTasks_().filter(t => t.estado !== 'Done' && t.fecha);
-  const hoy = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
-  const man = Utilities.formatDate(new Date(Date.now() + 86400000), TZ, 'yyyy-MM-dd');
-  const linea = t => '• ' + t.titulo + ' — ' + t.tipo + (t.categoria ? ' · ' + t.categoria : '') +
-    (t.hora ? ' · ' + t.hora : '') + (t.prioridad === 'Urgente' ? ' ⚠️' : '');
-  const vencidas = tasks.filter(t => t.fecha < hoy), deHoy = tasks.filter(t => t.fecha === hoy), deMan = tasks.filter(t => t.fecha === man);
-  if (!vencidas.length && !deHoy.length && !deMan.length && forzar !== true) return;
+/** Manda un mensaje de prueba por el canal configurado. */
+function probarRecordatorio() { enviarAviso_('Prueba del tablero «Dame la Vida». Si lees esto, los recordatorios funcionan.'); }
 
-  const out = ['*Tu día · ' + Utilities.formatDate(new Date(), TZ, 'dd/MM') + '*'];
-  if (vencidas.length) out.push('', '*Vencidas*', ...vencidas.map(linea));
-  if (deHoy.length) out.push('', '*Hoy*', ...deHoy.map(linea));
+/** Manda ahora el resumen del día (lo mismo que llega al despertar). */
+function probarAviso() { enviarAviso_(resumenDelDia_(hoy_())); }
+
+/** Lo llama el disparador. Manda lo que toque entre la última revisión y ahora. */
+function recordatorios() {
+  const props = PropertiesService.getScriptProperties();
+  const ahora = Date.now();
+  let desde = Number(props.getProperty('RECORDATORIOS_ULTIMO') || 0);
+  if (!desde || ahora - desde > 20 * 60000) desde = ahora - RECORDATORIO_CADA_MIN * 60000; // si estuvo pausado, no inundar
+  props.setProperty('RECORDATORIOS_ULTIMO', String(ahora));
+  const hoy = hoy_(), porHora = {};
+  eventosConAviso_(hoy).forEach(e => {
+    const t = msDe_(hoy, e.aviso);
+    if (t > desde && t <= ahora) (porHora[e.aviso] = porHora[e.aviso] || []).push(e.texto);
+  });
+  // Lo que cae a la misma hora va en un solo mensaje (cuida el cupo de Formspree).
+  Object.keys(porHora).sort().forEach(h => { try { enviarAviso_(porHora[h].join('\n\n')); } catch (err) { Logger.log(err); } });
+}
+
+/** Todos los avisos de un día: [{aviso:'HH:mm', texto}] ordenados. */
+function eventosConAviso_(ymd) {
+  const out = [], resumenEn = { hecho: false };
+  const add = (hhmm, minAntes, texto) => {
+    const m = minutos_(hhmm); if (m === null) return;
+    out.push({ aviso: hhmmDe_(Math.max(0, m - minAntes)), texto: texto });
+  };
+  const ev = eventosDelDia_(ymd);
+  ev.clases.forEach(c => add(c.inicio, AVISO_CLASE_MIN, 'En ' + AVISO_CLASE_MIN + ' min: ' + c.titulo + (c.lugar ? ' · ' + c.lugar : '') + ' (' + c.inicio + '–' + c.fin + ')'));
+  ev.fijas.forEach(f => {
+    if (f.aviso === '' || !f.inicio) return;
+    const antes = Number(f.aviso) || 0;
+    let txt = (antes ? 'En ' + antes + ' min: ' : '') + f.actividad + (f.fin ? ' (' + f.inicio + '–' + f.fin + ')' : ' · ' + f.inicio) +
+      (f.lugar ? '\n' + f.lugar : '') + (f.notas ? '\n' + f.notas : '');
+    if (!resumenEn.hecho && /despert/i.test(f.actividad)) { txt = '¡Buenos días! ' + txt + '\n\n' + resumenDelDia_(ymd); resumenEn.hecho = true; }
+    add(f.inicio, antes, txt);
+  });
+  ev.plan.forEach(b => add(b.inicio, AVISO_PLAN_MIN, 'Ahora: ' + b.actividad + ' hasta las ' + b.fin + (b.notas ? '\n' + b.notas : '')));
+  ev.tareas.filter(t => t.hora).forEach(t => add(t.hora, AVISO_TAREA_MIN, 'En 1 h: ' + t.tipo + ' · ' + t.titulo + ' (' + t.hora + ')' + (t.descripcion ? '\n' + t.descripcion : '')));
+  if (!resumenEn.hecho) out.push({ aviso: '07:00', texto: resumenDelDia_(ymd) });
+  return out.sort((a, b) => a.aviso < b.aviso ? -1 : 1);
+}
+
+/** Resumen corto: pagos y entregas de hoy, vencidas, lo de mañana y el plan de estudio. */
+function resumenDelDia_(ymd) {
+  const ev = eventosDelDia_(ymd), man = ymdMas_(ymd, 1);
+  const tasks = readTasks_().filter(t => t.estado !== 'Done');
+  const linea = t => '• ' + t.titulo + ' — ' + t.tipo + (t.hora ? ' · ' + t.hora : '') + (t.prioridad === 'Urgente' ? ' ⚠️' : '');
+  const out = ['*Tu día · ' + ymd.slice(8, 10) + '/' + ymd.slice(5, 7) + '*'];
+  const pagos = ev.fijas.filter(f => !f.inicio);
+  if (pagos.length) out.push('', '*Hoy toca*', ...pagos.map(f => '• ' + f.actividad + (f.notas ? ' — ' + f.notas : '')));
+  const venc = tasks.filter(t => t.fecha && t.fecha < ymd);
+  if (venc.length) out.push('', '*Vencidas*', ...venc.map(linea));
+  if (ev.tareas.length) out.push('', '*Fecha límite hoy*', ...ev.tareas.map(linea));
+  const deMan = tasks.filter(t => t.fecha === man);
   if (deMan.length) out.push('', '*Mañana*', ...deMan.map(linea));
-  const bloques = planForDate_(optional_(getPlan_), hoy);
-  if (bloques.length) out.push('', '*Plan de estudio de hoy*', ...bloques.map(b => '• ' + b.inicio + '–' + b.fin + ' ' + b.actividad));
-  if (out.length === 1) out.push('', 'Nada pendiente para hoy ni mañana.');
-  sendWhatsApp_(out.join('\n'));
+  if (ev.clases.length) out.push('', '*Clases*', ...ev.clases.map(c => '• ' + c.inicio + ' ' + c.titulo));
+  if (ev.plan.length) out.push('', '*Plan de estudio*', ...ev.plan.map(b => '• ' + b.inicio + '–' + b.fin + ' ' + b.actividad));
+  return out.join('\n');
 }
+
+/** Clases, fijas, bloques del plan y tareas con fecha de un día. */
+function eventosDelDia_(ymd) {
+  const cal = optional_(getCalendarioIPN_);
+  const enRango = e => e.inicio <= ymd && ymd <= (e.fin || e.inicio);
+  const libre = cal.some(e => enRango(e) && /descanso|vacaci/i.test(e.tipo));
+  const periodos = cal.filter(e => /^clases$/i.test(e.tipo));
+  const hayClases = !libre && (!periodos.length || periodos.some(enRango));
+  const dow = dowDe_(ymd);
+  const clases = !hayClases ? [] : optional_(getHorario_).filter(h => h.dia === dow).map(h => {
+    const ci = infoClase_(h.texto); return { titulo: ci.titulo, lugar: ci.lugar, inicio: h.inicio, fin: h.fin };
+  });
+  const fijas = fijasDelDia_(optional_(getFijas_), ymd).filter(f => hayClases || !/^clase$/i.test(f.tipo));
+  const tareasPorId = {}; const tareas = readTasks_();
+  tareas.forEach(t => tareasPorId[t.id] = t);
+  const plan = planForDate_(optional_(getPlan_), ymd).filter(b => !(tareasPorId[b.id] && tareasPorId[b.id].estado === 'Done'));
+  return { clases: clases, fijas: fijas, plan: plan, tareas: tareas.filter(t => t.estado !== 'Done' && t.fecha === ymd) };
+}
+
+function fijasDelDia_(fijas, ymd) {
+  const dow = dowDe_(ymd), dia = Number(ymd.slice(8, 10));
+  const ultimo = new Date(Number(ymd.slice(0, 4)), Number(ymd.slice(5, 7)), 0).getDate();
+  return fijas.filter(f => {
+    if ((f.desde && ymd < f.desde) || (f.hasta && ymd > f.hasta) || excluido_(f.excepto, ymd)) return false;
+    if (f.diaMes) return String(f.diaMes).split(/[,\s]+/).some(x => /últ|ult/i.test(x) ? dia === ultimo : Number(x) === dia || (Number(x) > ultimo && dia === ultimo));
+    return diasSet_(f.dias).indexOf(dow) > -1;
+  });
+}
+
+function excluido_(excepto, ymd) { return String(excepto || '').split(/[,\s]+/).indexOf(ymd) > -1; }
+
+/** "AED · Edif 1 · Salón 111" a partir del texto de la celda del horario. */
+function infoClase_(txt) {
+  const n = String(txt || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const SHORT = { 'Algoritmos y Estructura de Datos': 'AED', 'Programación para Ciencia de Datos': 'PCD', 'Introducción a la Ciencia de Datos': 'ICD', 'Ética y Legalidad': 'Ética' };
+  let titulo = '';
+  AMBITOS[AMBITO_DP].categorias.forEach(c => {
+    if (titulo) return;
+    const toks = c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/\s+/).filter(w => w.length > 3);
+    if (toks.length && toks.every(w => n.indexOf(w.slice(0, 6)) > -1)) titulo = SHORT[c] || c;
+  });
+  if (!titulo) titulo = String(txt).split('\n').map(l => l.trim()).filter(l => l && !/^\d[A-Z]{2}\d$/.test(l))[0] || 'Clase';
+  titulo = titulo.split(/\s{2,}/).filter(Boolean).join(' · ');
+  const loc = String(txt).match(/Edif:?\s*(\w+)\s*-\s*Sal[oó]n:?\s*(\w+)/i);
+  return { titulo: titulo, lugar: loc ? 'Edif ' + loc[1] + ' · Salón ' + loc[2] : '' };
+}
+
+/** Manda por Formspree (si está configurado y hay cupo) o por CallMeBot. */
+function enviarAviso_(text) {
+  const props = PropertiesService.getScriptProperties();
+  const endpoint = props.getProperty('FORMSPREE_ENDPOINT');
+  if (endpoint) {
+    const mes = Utilities.formatDate(new Date(), TZ, 'yyyy-MM'), limite = Number(props.getProperty('FORMSPREE_LIMITE') || 50);
+    const key = 'FORMSPREE_USO_' + mes, uso = Number(props.getProperty(key) || 0);
+    if (uso < limite) {
+      const res = UrlFetchApp.fetch(endpoint, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+        headers: { Accept: 'application/json' },
+        payload: JSON.stringify({ _subject: 'Dame la Vida · ' + text.split('\n')[0].slice(0, 60), message: text }) });
+      Logger.log('Formspree respondió ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 200));
+      if (res.getResponseCode() < 300) { props.setProperty(key, String(uso + 1)); return; }
+    } else Logger.log('Formspree: se alcanzó el límite de ' + limite + ' envíos este mes.');
+  }
+  if (props.getProperty('CALLMEBOT_APIKEY')) return sendWhatsApp_(text);
+  if (!endpoint) throw new Error('Configura FORMSPREE_ENDPOINT o CALLMEBOT_APIKEY en las propiedades del script.');
+}
+
+function sendWhatsApp_(text) {
+  const props = PropertiesService.getScriptProperties();
+  const phone = myPhone_(), key = props.getProperty('CALLMEBOT_APIKEY');
+  if (!phone || !key) throw new Error('Faltan MI_WHATSAPP o CALLMEBOT_APIKEY en las propiedades del script.');
+  const url = 'https://api.callmebot.com/whatsapp.php?phone=%2B' + phone +
+    '&text=' + encodeURIComponent(text) + '&apikey=' + encodeURIComponent(key);
+  const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  Logger.log('CallMeBot respondió ' + res.getResponseCode());
+}
+
+/* --- fechas en hora de CDMX --- */
+function hoy_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'); }
+function ymdMas_(ymd, n) { const p = ymd.split('-').map(Number); return Utilities.formatDate(new Date(p[0], p[1] - 1, p[2] + n, 12), TZ, 'yyyy-MM-dd'); }
+function dowDe_(ymd) { const p = ymd.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2], 12).getDay(); }
+function minutos_(hhmm) { const m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : null; }
+function hhmmDe_(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+/** Milisegundos de "ymd HH:mm" en CDMX (UTC-6 todo el año desde 2022). */
+function msDe_(ymd, hhmm) { const p = ymd.split('-').map(Number), m = minutos_(hhmm); return Date.UTC(p[0], p[1] - 1, p[2], 6, 0) + m * 60000; }
+
+/* Compatibilidad con la versión anterior: si aún tienes el disparador viejo, manda el resumen. */
+function avisoDiario() { enviarAviso_(resumenDelDia_(hoy_())); }
+function instalarAvisoDiario() { instalarRecordatorios(); }
+function quitarAvisoDiario() { quitarRecordatorios(); }
 
 /** Bloques de la pestaña Plan que tocan en una fecha (yyyy-MM-dd), ordenados por hora. */
 function planForDate_(plan, ymd) {
   const p = ymd.split('-').map(Number);
   const dow = new Date(p[0], p[1] - 1, p[2]).getDay();
-  return plan.filter(b => (!b.desde || b.desde <= ymd) && (!b.hasta || ymd <= b.hasta) && diasSet_(b.dias).indexOf(dow) > -1)
+  return plan.filter(b => (!b.desde || b.desde <= ymd) && (!b.hasta || ymd <= b.hasta) && !excluido_(b.excepto, ymd) && diasSet_(b.dias).indexOf(dow) > -1)
     .sort((a, b) => a.inicio < b.inicio ? -1 : 1);
 }
 
@@ -311,16 +469,6 @@ function diasSet_(txt) {
     else if (map[tok] !== undefined) out.push(map[tok]);
   });
   return out;
-}
-
-function sendWhatsApp_(text) {
-  const props = PropertiesService.getScriptProperties();
-  const phone = myPhone_(), key = props.getProperty('CALLMEBOT_APIKEY');
-  if (!phone || !key) throw new Error('Faltan MI_WHATSAPP o CALLMEBOT_APIKEY en las propiedades del script.');
-  const url = 'https://api.callmebot.com/whatsapp.php?phone=%2B' + phone +
-    '&text=' + encodeURIComponent(text) + '&apikey=' + encodeURIComponent(key);
-  const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-  Logger.log('CallMeBot respondió ' + res.getResponseCode());
 }
 
 /** Tu número con lada de país (52 + 10 dígitos), leído de las propiedades del script. */
@@ -373,11 +521,34 @@ function getHorario_() {
 function getPlan_() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PLAN);
   if (!sh || sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues()
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 9).getValues()
     .filter(r => String(r[1]).trim() && fmtTime_(r[3]) && fmtTime_(r[4]))
     .map(r => ({ id: String(r[0] || '').trim(), actividad: String(r[1]).trim(), dias: String(r[2] || '').trim(),
                  inicio: fmtTime_(r[3]), fin: fmtTime_(r[4]), desde: fmtDay_(r[5]), hasta: fmtDay_(r[6]),
-                 notas: String(r[7] || '').trim() }));
+                 notas: String(r[7] || '').trim(), excepto: fmtDays_(r[8]) }));
+}
+
+/**
+ * Actividades fijas (pestaña "Fijas"): Actividad · Tipo · Días · Día del mes · Inicio · Fin · Desde · Hasta ·
+ * Excepto · Lugar · Notas · Aviso (min antes). Sin Inicio = todo el día (pagos). Sin Fin = marca (comidas).
+ * Tipo "Clase" se oculta en días sin clases, igual que el horario.
+ */
+function getFijas_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_FIJAS);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 12).getValues()
+    .filter(r => String(r[0]).trim())
+    .map((r, i) => ({ fila: i + 2, actividad: String(r[0]).trim(), tipo: String(r[1] || '').trim(), dias: String(r[2] || '').trim(),
+                      diaMes: String(r[3] || '').trim(), inicio: fmtTime_(r[4]), fin: fmtTime_(r[5]),
+                      desde: fmtDay_(r[6]), hasta: fmtDay_(r[7]), excepto: fmtDays_(r[8]), lugar: String(r[9] || '').trim(),
+                      notas: String(r[10] || '').trim(), aviso: r[11] === '' || r[11] === null ? '' : String(r[11]).trim() }));
+}
+
+/** Celda con una o varias fechas (Date o "2026-11-14, 2026-11-21") → "2026-11-14, 2026-11-21". */
+function fmtDays_(v) {
+  if (v instanceof Date) return fmtDay_(v);
+  if (typeof v === 'number' && v > 30000) return fmtDay_(new Date(Math.round((v - 25569) * 86400000) + 12 * 3600000)); // fecha guardada como número de serie
+  return (String(v || '').match(/\d{4}-\d{2}-\d{2}/g) || []).join(', ');
 }
 
 /** Calendario académico (pestaña "Calendario IPN": Evento · Inicio · Fin · Tipo · Notas). */
@@ -457,7 +628,7 @@ function findRow_(sh, cols, id) {
   return -1;
 }
 
-/** Siguiente ID con el prefijo del ámbito: ESC-001, PER-001… */
+/** Siguiente ID con el prefijo del ámbito: DP-001, PER-001… */
 function nextId_(sh, cols, prefix) {
   const last = sh.getLastRow();
   let max = 0;
