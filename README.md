@@ -58,13 +58,14 @@ Si cambias `Code.gs`: **Implementar → Gestionar implementaciones → ✏️ �
 - **Fijas**: tu rutina. Actividad · Tipo · Días · Día del mes · Inicio · Fin · Desde · Hasta · Excepto · Lugar · Notas · Aviso (min antes). Sin *Inicio* = todo el día (pagos); sin *Fin* = marca (comidas, medicamento). *Día del mes* acepta números y `último` (`15, último`). Tipo `Clase` se oculta en días sin clases.
 - **Plan**: bloques de estudio. ID (de la tarea) · Actividad · Días · Inicio · Fin · Desde · Hasta · Notas · Excepto (fechas en que no aplica, separadas por coma). Días acepta `Diario`, `L-V` o letras `L,M,X,J,V,S,D`. El color sale de la urgencia de la tarea ligada.
 - **Calendario IPN**: Evento · Inicio · Fin · Tipo · Notas. Tipo `Clases` marca el rango en que se muestra el horario; `Descanso` y `Vacaciones` ocultan las clases ese día.
+- **Hechos**: se crea sola cuando marcas la primera cosa. Clave · Fecha · Marcado en. Cada fila es una ocurrencia marcada como hecha (una clase, bloque de estudio o actividad fija de un día concreto). Si borras una fila, esa marca desaparece.
 - **Plan UX EBAC**: módulos del curso con su fecha meta y una casilla de Hecho (solo vive en la hoja).
 
 ## Funciones
 
 - **Escuela / Personal**: el selector de arriba cambia de tablero; se recuerda en tu navegador.
 - **Filtros plegables** por materia, tipo, escuela/plataforma y urgencia, más buscador.
-- **Calendario** (Mes / Semana / Día): clases y deporte en azul, comidas como marcas verdes, rutina, pagos, bloques del Plan (color por urgencia: rojo, ámbar, verde), fechas límite y calendario IPN. Toca una asignación para editarla; toca una clase o actividad fija para ver su ventanita con detalles, WhatsApp y Google Calendar (repetido).
+- **Calendario** (Mes / Semana / Día): clases y deporte en azul, comidas como marcas verdes, rutina, pagos, bloques del Plan (color por urgencia: rojo, ámbar, verde), fechas límite y calendario IPN. Toca una clase, actividad fija o bloque de estudio para abrir su ventanita con detalles, WhatsApp, Google Calendar y el botón **Marcar como hecha**. Lo ya pasado del día se ve más tenue. Lo hecho tiene ✓ verde; lo que ya pasó sin marcarse queda con un bullet rojo. Las asignaciones en Doing muestran una barra de progreso (hechas / totales, % transcurrido y % completado).
 - **Reloj** con la hora de Ciudad de México en el encabezado.
 - **Próximo pendiente** con días restantes y conteo de vencidas.
 - **Google Calendar**: con fecha, botón para agregarla (con hora si la pusiste) y `.ics` para otros calendarios, con recordatorio un día antes (y una hora antes si tiene hora).

@@ -32,6 +32,7 @@ const SHEET_HORARIO = 'Horario';
 const SHEET_PLAN = 'Plan';
 const SHEET_CAL_IPN = 'Calendario IPN';
 const SHEET_FIJAS = 'Fijas';
+const SHEET_HECHOS = 'Hechos';
 const TZ = 'America/Mexico_City';
 
 /* ================== CATEGORÍAS (edítalas aquí si cambian) ================== */
@@ -113,6 +114,7 @@ function crearHoja() {
   ensureSheet_(ss, SHEET_PLAN, ['ID', 'Actividad', 'Días', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Notas', 'Excepto']);
   ensureSheet_(ss, SHEET_FIJAS, ['Actividad', 'Tipo', 'Días', 'Día del mes', 'Inicio', 'Fin', 'Desde', 'Hasta', 'Excepto', 'Lugar', 'Notas', 'Aviso (min antes)']);
   ensureSheet_(ss, SHEET_CAL_IPN, ['Evento', 'Inicio', 'Fin', 'Tipo', 'Notas']);
+  ensureSheet_(ss, SHEET_HECHOS, ['Clave', 'Fecha', 'Marcado en']);
 
   // Menús desplegables en la hoja (por si editas directo ahí)
   const cols = colMap_(tareas);
@@ -162,6 +164,7 @@ function doPost(e) {
       case 'save':   return saveTask_(body.task, body.user);
       case 'move':   return moveTask_(body.id, body.estado, body.user);
       case 'delete': return deleteTask_(body.id, body.user);
+      case 'hecho':  return toggleHecho_(body.clave, body.fecha, body.done);
       default: throw new Error('Acción no válida: ' + body.action);
     }
   }));
@@ -170,10 +173,79 @@ function doPost(e) {
 /* ============================== OPERACIONES ============================== */
 
 function getBoard_() {
-  return { ok: true, tasks: readTasks_(), team: getTeam_(), recursos: getRecursos_(), ambitos: AMBITOS,
-           horario: optional_(getHorario_), plan: optional_(getPlan_), calendario: optional_(getCalendarioIPN_),
-           fijas: optional_(getFijas_),
+  const tasks = readTasks_();
+  const plan = optional_(getPlan_);
+  const hechos = optional_(getHechos_);
+  progresoTareas_(tasks, plan, hechos);
+  return { ok: true, tasks: tasks, team: getTeam_(), recursos: getRecursos_(), ambitos: AMBITOS,
+           horario: optional_(getHorario_), plan: plan, calendario: optional_(getCalendarioIPN_),
+           fijas: optional_(getFijas_), hechos: hechos,
            estados: ESTADOS, prioridades: PRIORIDADES, miWhatsapp: myPhone_(), serverTime: now_() };
+}
+
+/** Clave de ocurrencia marcable, igual en el servidor y en el navegador. */
+function claveFija_(f) { return 'fija|' + f.actividad + '|' + f.dias + '|' + (f.diaMes || '') + '|' + (f.inicio || ''); }
+function clavePlan_(b) { return 'plan|' + (b.id || '') + '|' + b.actividad + '|' + b.dias + '|' + b.inicio; }
+function claveClase_(h) { return 'clase|' + h.dia + '|' + h.inicio + '|' + h.fin + '|' + infoClase_(h.texto).titulo; }
+
+/** Marca o desmarca una ocurrencia (clave, fecha). Devuelve el tablero completo. */
+function toggleHecho_(clave, fecha, done) {
+  const c = String(clave || '').trim(), f = parseDate_(fecha);
+  if (!c || !f) throw new Error('Falta clave o fecha.');
+  return withLock_(() => {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ensureSheet_(ss, SHEET_HECHOS, ['Clave', 'Fecha', 'Marcado en']);
+    const last = sh.getLastRow();
+    let fila = -1;
+    if (last > 1) {
+      const vals = sh.getRange(2, 1, last - 1, 2).getValues();
+      for (let i = 0; i < vals.length; i++) if (String(vals[i][0]) === c && fmtDay_(vals[i][1]) === f) { fila = i + 2; break; }
+    }
+    if (done) {
+      if (fila === -1) sh.appendRow([c, f, now_()]);
+      else sh.getRange(fila, 3).setValue(now_());
+    } else if (fila !== -1) sh.deleteRow(fila);
+    avisarCambio_();
+    return getBoard_();
+  });
+}
+
+function getHechos_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_HECHOS);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues()
+    .filter(r => String(r[0]).trim() && fmtDay_(r[1]))
+    .map(r => ({ clave: String(r[0]).trim(), fecha: fmtDay_(r[1]), marcado: String(r[2] || '') }));
+}
+
+/** Para cada tarea en Doing con bloques en Plan, añade t.progreso = {total, elapsed, done}. */
+function progresoTareas_(tasks, plan, hechos) {
+  const hoy = hoy_();
+  const hechosPorClave = {};
+  hechos.forEach(h => { (hechosPorClave[h.clave] = hechosPorClave[h.clave] || {})[h.fecha] = 1; });
+  tasks.forEach(t => {
+    if (t.estado !== 'Doing') return;
+    const blocks = plan.filter(b => b.id === t.id);
+    if (!blocks.length) return;
+    blocks.forEach(b => { if (!b.k) b.k = clavePlan_(b); });
+    let desde = blocks.map(b => b.desde).filter(Boolean).sort()[0] || t.inicio || hoy;
+    const hastas = blocks.map(b => b.hasta).filter(Boolean).sort();
+    let hasta = hastas.length ? hastas[hastas.length - 1] : (t.fecha || '');
+    if (!hasta || hasta < hoy) hasta = hoy;        // tarea sin fin: mide hasta hoy
+    const tope = ymdMas_(hoy, 400);
+    if (hasta > tope) hasta = tope;
+    let total = 0, elapsed = 0, done = 0;
+    for (let d = desde; d <= hasta; d = ymdMas_(d, 1)) {
+      blocks.forEach(b => {
+        if ((!b.desde || b.desde <= d) && (!b.hasta || d <= b.hasta) && !excluido_(b.excepto, d) && diasSet_(b.dias).indexOf(dowDe_(d)) > -1) {
+          total++;
+          if (d <= hoy) elapsed++;
+          if (hechosPorClave[b.k] && hechosPorClave[b.k][d]) done++;
+        }
+      });
+    }
+    t.progreso = { total: total, elapsed: elapsed, done: done };
+  });
 }
 
 /** Una pestaña opcional con un error (o que no existe) no debe tumbar el tablero. */

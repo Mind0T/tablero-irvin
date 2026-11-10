@@ -239,10 +239,12 @@ h1 { margin: 0; font: 800 clamp(26px, 4vw, 40px)/1 var(--font-display); color: v
 .corner { border-bottom: 1px solid var(--border-default); }
 .allday { border-left: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); padding: 4px; display: grid; gap: 3px; align-content: start; min-height: 30px; }
 .adlabel { font-size: 10px; color: var(--text-muted); padding: 8px 6px; border-bottom: 1px solid var(--border-default); text-align: right; }
-.chipev { display: block; width: 100%; text-align: left; font-size: 11px; line-height: 1.3; padding: 3px 6px; border-radius: 4px; border: 0; cursor: pointer;
+.chipev { display: block; width: 100%; text-align: left; font-size: 11px; line-height: 1.3; padding: 3px 6px 3px 18px; border-radius: 4px; border: 0; cursor: pointer;
   color: var(--text-primary); background: var(--g, var(--bg-surface-2)); border-left: 3px solid var(--b, var(--border-strong));
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chipev.done { opacity: .5; text-decoration: line-through; }
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+.chipev.done { opacity: .55; }
+.chipev.done::before { content: "✓"; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); color: #5FD03A; font-weight: 700; font-size: 11px; }
+.chipev.miss::before { content: ""; position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 99px; background: var(--p-urg); box-shadow: 0 0 0 1px #0A0A0A; }
 .hours { position: relative; }
 .hours span { position: absolute; right: 6px; transform: translateY(-50%); font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .dcol { position: relative; border-left: 1px solid var(--border-default);
@@ -260,7 +262,23 @@ h1 { margin: 0; font: 800 clamp(26px, 4vw, 40px)/1 var(--font-display); color: v
   background: var(--meal); color: #0A0A0A; font: 700 10px/18px var(--font-body); white-space: nowrap; max-width: calc(50% - 5px); overflow: hidden; text-overflow: ellipsis; }
 .mk.rut { border-top-color: var(--rut); } .mk.rut button { background: var(--rut); right: auto; left: 3px; }
 .mk.med { border-top-color: var(--med); } .mk.med button { background: var(--med); right: auto; left: 3px; }
-.ev.done { opacity: .45; }
+.ev.done { opacity: .5; text-decoration: line-through; }
+.ev.done::after { content: "✓"; position: absolute; top: 2px; right: 4px; color: #5FD03A; font: 700 12px var(--font-body); }
+.ev.miss::after { content: ""; position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 99px; background: var(--p-urg); box-shadow: 0 0 0 1.5px #0A0A0A; }
+.ev.miss { opacity: .88; }
+.mk.done button::before { content: "✓ "; color: #0A0A0A; }
+.mk.miss button { outline: 2px solid var(--p-urg); outline-offset: 1px; }
+.pastdim { position: absolute; left: 0; right: 0; top: 0; background: rgba(0,0,0,.42); z-index: 1; pointer-events: none;
+  background-image: linear-gradient(to bottom, rgba(10,10,10,.28), rgba(10,10,10,.5)); }
+.pill.done { color: #5FD03A; border-color: rgba(95,208,58,.5); background: rgba(95,208,58,.08); }
+.pill.miss { color: var(--p-urg); border-color: rgba(229,72,77,.5); background: rgba(229,72,77,.08); }
+.btn.done { background: rgba(95,208,58,.12); color: #5FD03A; border-color: rgba(95,208,58,.45); }
+.prog { grid-column: 1 / -1; margin: 8px 0 2px; }
+.prog-bar { position: relative; height: 5px; background: var(--bg-surface-2); border-radius: 99px; overflow: hidden; }
+.prog-bar .prog-elapsed { position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,.14); }
+.prog-bar .prog-done { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, #5FD03A, #8BE26B); }
+.prog-txt { margin-top: 4px; font-size: 10.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.prog-txt b { color: var(--text-primary); font-weight: 700; }
 .nowline { position: absolute; left: 0; right: 0; height: 2px; background: var(--p-urg); z-index: 4; pointer-events: none; }
 .nowline::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--p-urg); }
 
@@ -618,12 +636,15 @@ details.mats > summary:hover { background: var(--bg-surface); }
 
 <dialog id="dlgFija">
   <form method="dialog" id="frmFija">
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill tipo" id="fjTipo"></span><span class="pill" id="fjCuando"></span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill tipo" id="fjTipo"></span><span class="pill" id="fjCuando"></span><span class="pill" id="fjStatus" hidden></span></div>
     <h2 id="fjTitulo"></h2>
     <div class="fjgrid" id="fjInfo"></div>
     <div class="quick" id="fjQuick"></div>
     <p class="stamp" id="fjHint"></p>
-    <div class="dlg-actions"><div class="right"><button class="btn ghost" type="submit">Cerrar</button></div></div>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="fjToggleHecho" hidden></button>
+      <div class="right"><button class="btn ghost" type="submit">Cerrar</button></div>
+    </div>
   </form>
 </dialog>
 
@@ -768,8 +789,10 @@ details.mats > summary:hover { background: var(--bg-surface); }
       { etiqueta: "Repo ProgramacionLCD", enlace: "https://github.com/", notas: "Ejemplo", ambito: DP, categoria: "Programación para Ciencia de Datos" },
       { etiqueta: "Citas IMSS digital", enlace: "https://www.imss.gob.mx/", notas: "", ambito: "Personal", categoria: "IMSS" }
     ];
+    var _hechos = [];
     function board() { return { ok: true, tasks: JSON.parse(JSON.stringify(tasks)), team: [{ nombre: "Irvin", color: "#E5E5E5" }],
-      recursos: recursos.slice(), ambitos: AMBITOS_DEFAULT, horario: horario, plan: plan, calendario: calendario, fijas: fijas, miWhatsapp: "", serverTime: stamp() }; }
+      recursos: recursos.slice(), ambitos: AMBITOS_DEFAULT, horario: horario, plan: plan, calendario: calendario, fijas: fijas,
+      hechos: _hechos.slice(), miWhatsapp: "", serverTime: stamp() }; }
     function wait(v) { return new Promise(function (r) { setTimeout(function () { r(v); }, 150); }); }
     return {
       getBoard: function () { return wait(board()); },
@@ -788,7 +811,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
         tasks.forEach(function (x) { if (x.id === id) { x.estado = estado; x.actualizado = stamp(); x.actualizadoPor = user; } });
         return wait(board());
       },
-      deleteTask: function (id) { tasks = tasks.filter(function (x) { return x.id !== id; }); return wait(board()); }
+      deleteTask: function (id) { tasks = tasks.filter(function (x) { return x.id !== id; }); return wait(board()); },
+      toggleHecho: function (clave, fecha, done) {
+        _hechos = _hechos.filter(function (h) { return !(h.clave === clave && h.fecha === fecha); });
+        if (done) _hechos.push({ clave: clave, fecha: fecha, marcado: new Date().toISOString() });
+        return wait(board());
+      }
     };
   })();
 
@@ -796,11 +824,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
     getBoard: function () { return MODE === "demo" ? demo.getBoard() : apiFetch("GET"); },
     saveTask: function (t, u) { return MODE === "demo" ? demo.saveTask(t, u) : apiFetch("POST", { action: "save", task: t, user: u }); },
     moveTask: function (id, e, u) { return MODE === "demo" ? demo.moveTask(id, e, u) : apiFetch("POST", { action: "move", id: id, estado: e, user: u }); },
-    deleteTask: function (id, u) { return MODE === "demo" ? demo.deleteTask(id, u) : apiFetch("POST", { action: "delete", id: id, user: u }); }
+    deleteTask: function (id, u) { return MODE === "demo" ? demo.deleteTask(id, u) : apiFetch("POST", { action: "delete", id: id, user: u }); },
+    toggleHecho: function (clave, fecha, done) { return MODE === "demo" ? demo.toggleHecho(clave, fecha, done) : apiFetch("POST", { action: "hecho", clave: clave, fecha: fecha, done: done }); }
   };
 
   /* ------------ estado ------------ */
-  var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], fijas: [], ambitos: AMBITOS_DEFAULT, miWhatsapp: "",
+  var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], fijas: [], hechos: [], hechosSet: {},
+                ambitos: AMBITOS_DEFAULT, miWhatsapp: "",
                 ambito: DP, f: { cat: "", tipo: "", inst: "", prio: "" }, q: "", openPop: "",
                 view: "board", calMode: "week", calDate: today0(), busy: 0, dragging: false };
   var $ = function (id) { return document.getElementById(id); };
@@ -838,6 +868,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
     if (res.ambitos && res.ambitos[DP] && res.ambitos.Personal) state.ambitos = res.ambitos;
     state.tasks.forEach(function (t) { if (t.ambito === "Escuela" || !state.ambitos[t.ambito]) t.ambito = /^PER-/i.test(t.id) ? "Personal" : DP; });
     state.fijas = res.fijas || [];
+    state.hechos = res.hechos || [];
+    state.hechosSet = {};
+    state.hechos.forEach(function (h) { state.hechosSet[h.clave + "|" + h.fecha] = true; });
     state.miWhatsapp = res.miWhatsapp || "";
     setSync("", (MODE === "live" ? "Sincronizado · " : "Modo demo · ") + (res.serverTime || "").slice(11));
     render();
@@ -1037,8 +1070,41 @@ details.mats > summary:hover { background: var(--bg-surface); }
       "<h3>" + esc(t.titulo) + "</h3>" +
       (t.descripcion ? '<p class="desc">' + esc(t.descripcion) + "</p>" : "") +
       (insts.length ? '<div class="tags">' + insts.map(function (i) { return '<span class="tag">' + esc(i) + "</span>"; }).join("") + "</div>" : "") +
+      progresoHTML(t) +
       '<div class="card-foot">' + dueHTML(t) + '<span class="meta">' + icons + "</span></div>" +
       '<div class="moves">' + moves + "</div></article>";
+  }
+  /** Si el servidor no mandó progreso (modo demo), lo calculo aquí con Plan y Hechos. */
+  function computeProgreso(t) {
+    if (t.estado !== "Doing") return null;
+    var blocks = state.plan.filter(function (b) { return b.id === t.id; });
+    if (!blocks.length) return null;
+    var desdes = blocks.map(function (b) { return b.desde; }).filter(Boolean).sort();
+    var hastas = blocks.map(function (b) { return b.hasta; }).filter(Boolean).sort();
+    var desde = desdes[0] || t.inicio || ymdOf(today0());
+    var tdy = ymdOf(today0());
+    var hasta = hastas.length ? hastas[hastas.length - 1] : (t.fecha || tdy);
+    if (hasta < tdy) hasta = tdy;
+    var total = 0, elapsed = 0, done = 0;
+    for (var d = desde; d <= hasta; d = ymdOf(addDays(parseYMD(d), 1))) {
+      blocks.forEach(function (b) {
+        var dow = parseYMD(d).getDay();
+        if ((!b.desde || b.desde <= d) && (!b.hasta || d <= b.hasta) && !excluded(b.excepto, d) && diasSet(b.dias).indexOf(dow) > -1) {
+          total++;
+          if (d <= tdy) elapsed++;
+          if (state.hechosSet[clavePlan(b) + "|" + d]) done++;
+        }
+      });
+    }
+    return { total: total, elapsed: elapsed, done: done };
+  }
+  /** Barra de progreso para asignaciones en Doing con bloques de Plan. */
+  function progresoHTML(t) {
+    var p = t.progreso || computeProgreso(t); if (!p || !p.total) return "";
+    var hechoPct = Math.round(p.done * 100 / p.total), elapsedPct = Math.round(p.elapsed * 100 / p.total);
+    return '<div class="prog" title="Hechas ' + p.done + " de " + p.total + " sesiones · " + elapsedPct + '% transcurrido">' +
+      '<div class="prog-bar"><span class="prog-elapsed" style="width:' + elapsedPct + '%"></span><span class="prog-done" style="width:' + hechoPct + '%"></span></div>' +
+      '<div class="prog-txt"><b>' + p.done + "/" + p.total + '</b> hechas · ' + elapsedPct + '% transcurrido · ' + hechoPct + '% completado</div></div>';
   }
   function renderBoard() {
     var list = filtered();
@@ -1098,6 +1164,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
     }
     return diasSet(f.dias).indexOf(dow) > -1;
   }
+  /* Mismas claves que el servidor (Apps Script): identifican una ocurrencia marcable. */
+  function claveFija(f) { return "fija|" + f.actividad + "|" + f.dias + "|" + (f.diaMes || "") + "|" + (f.inicio || ""); }
+  function clavePlan(p) { return "plan|" + (p.id || "") + "|" + p.actividad + "|" + p.dias + "|" + p.inicio; }
+  function claveClase(h, ci) { return "clase|" + h.dia + "|" + h.inicio + "|" + h.fin + "|" + ci.title; }
+  function hecho(clave, ymd) { return !!state.hechosSet[clave + "|" + ymd]; }
   function dayData(ymd) {
     var d = parseYMD(ymd), dow = d.getDay(), timed = [], allDay = [], marks = [], classes = hasClasses(ymd);
     ipnFor(ymd).forEach(function (e) {
@@ -1106,13 +1177,14 @@ details.mats > summary:hover { background: var(--bg-surface); }
     });
     if (classes) state.horario.forEach(function (h) {
       if (h.dia !== dow) return;
-      var ci = classInfo(h);
-      timed.push({ kind: "class", title: ci.title, sub: ci.where, s: mins(h.inicio), e: mins(h.fin), tipo: "Clase", info: { h: h, ci: ci } });
+      var ci = classInfo(h), cv = claveClase(h, ci);
+      timed.push({ kind: "class", title: ci.title, sub: ci.where, s: mins(h.inicio), e: mins(h.fin), tipo: "Clase", info: { h: h, ci: ci }, clave: cv, done: hecho(cv, ymd) });
     });
     (state.fijas || []).forEach(function (f) {
       if (!fijaToday(f, ymd, dow)) return;
       if (/^clase$/i.test(f.tipo) && !classes) return;
-      var c = fijaColor(f.tipo), s = mins(f.inicio), e = mins(f.fin), item = { title: f.actividad, tipo: f.tipo || "Rutina", info: f, b: c[0], g: c[1] };
+      var c = fijaColor(f.tipo), s = mins(f.inicio), e = mins(f.fin), cv = claveFija(f);
+      var item = { title: f.actividad, tipo: f.tipo || "Rutina", info: f, b: c[0], g: c[1], clave: cv, done: hecho(cv, ymd) };
       if (s == null) allDay.push(Object.assign(item, { kind: "fixed", title: (/pago/i.test(f.tipo) ? "$ " : "") + f.actividad }));
       else if (e == null || e <= s) marks.push(Object.assign(item, { kind: "mark", s: s, cls: /comida/i.test(f.tipo) ? "" : /medic/i.test(f.tipo) ? "med" : "rut" }));
       else timed.push(Object.assign(item, { kind: "fixed" + (/traslado/i.test(f.tipo) ? " traslado" : ""), sub: f.inicio + "–" + f.fin + (f.lugar ? " · " + f.lugar : ""), s: s, e: e }));
@@ -1122,8 +1194,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
       var t = p.id ? taskById(p.id) : null, c = PRIO_COLORS[(t && t.prioridad) || "Normal"] || PRIO_COLORS.Normal;
       var s = mins(p.inicio), e = mins(p.fin);
       if (s == null || e == null) return;
+      var cv = clavePlan(p);
       timed.push({ kind: "plan", title: p.actividad, sub: p.inicio + "–" + p.fin + (p.notas ? " · " + p.notas : ""), s: s, e: e, id: t ? p.id : "",
-                   tipo: "Bloque de estudio", info: p, b: c[0], g: c[1], done: t && t.estado === "Done" });
+                   tipo: "Bloque de estudio", info: p, b: c[0], g: c[1], clave: cv, done: (t && t.estado === "Done") || hecho(cv, ymd) });
     });
     state.tasks.forEach(function (t) {
       var c = PRIO_COLORS[t.prioridad || "Normal"] || PRIO_COLORS.Normal;
@@ -1157,9 +1230,23 @@ details.mats > summary:hover { background: var(--bg-surface); }
   // Cada evento dibujado se guarda aquí para abrir su ventanita al tocarlo.
   var evReg = [];
   function regEv(x, ymd) { x.ymd = ymd; evReg.push(x); return evReg.length - 1; }
+  /** Estado visual de una ocurrencia: "done" (verde), "miss" (bullet rojo, pasó sin hacerse) o "". */
+  function evStatus(x, ymd) {
+    var tdy = ymdOf(today0());
+    if (x.done) return "done";
+    if (ymd > tdy) return "";
+    if (ymd < tdy) return x.clave ? "miss" : "";
+    var n = new Date().getHours() * 60 + new Date().getMinutes();
+    if (x.s != null && x.e != null && n >= x.e) return x.clave ? "miss" : "";
+    if (x.s != null && x.e == null && n >= x.s) return x.clave ? "miss" : "";
+    return "";
+  }
   function chipHTML(x, ymd) {
-    return '<button type="button" class="chipev' + (x.done ? " done" : "") + '" style="--b:' + (x.b || "var(--border-strong)") + ";--g:" + (x.g || "var(--bg-surface-2)") + '"' +
-      (x.id ? ' data-task="' + esc(x.id) + '"' : ' data-ev="' + regEv(x, ymd) + '"') + ' title="' + esc(x.title) + '">' + esc(x.title) + "</button>";
+    var st = evStatus(x, ymd);
+    // Los bloques del Plan y las clases/fijas con ocurrencia marcable abren la ventanita (data-ev), aun si tienen id de tarea.
+    var dataAttr = (x.clave || !x.id) ? ' data-ev="' + regEv(x, ymd) + '"' : ' data-task="' + esc(x.id) + '"';
+    return '<button type="button" class="chipev ' + st + '" style="--b:' + (x.b || "var(--border-strong)") + ";--g:" + (x.g || "var(--bg-surface-2)") + '"' +
+      dataAttr + ' title="' + esc(x.title) + '">' + esc(x.title) + "</button>";
   }
   function durTxt(m) { var h = Math.floor(m / 60), r = m % 60; return h ? h + " h" + (r ? " " + r : "") : r + " min"; }
 
@@ -1196,6 +1283,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
     days.forEach(function (x, i) {
       var y = ymdOf(x), dd = data[i];
       html += '<div class="dcol' + (dd.off ? " off" : "") + '" style="height:' + H + 'px">';
+      // Dim del rango ya pasado del día de hoy.
+      if (y === tdy) {
+        var pastTop = (Math.max(nowMin, CAL_START * 60) - CAL_START * 60) / 60 * HP;
+        if (pastTop > 0) html += '<div class="pastdim" style="height:' + Math.min(pastTop, H) + 'px"></div>';
+      } else if (y < tdy) {
+        html += '<div class="pastdim" style="height:' + H + 'px"></div>';
+      }
       dd.timed.forEach(function (ev) {
         var s = Math.max(ev.s, CAL_START * 60), e = Math.min(ev.e, CAL_END * 60);
         if (e <= s) return;
@@ -1203,13 +1297,16 @@ details.mats > summary:hover { background: var(--bg-surface); }
         var w = 100 / ev.ncols, left = ev.col * w;
         var style = "top:" + top + "px;height:" + hgt + "px;left:calc(" + left + "% + 2px);width:calc(" + w + "% - 4px);" +
           (ev.kind !== "class" ? "--b:" + ev.b + ";--g:" + ev.g : "");
-        html += '<button type="button" class="ev ' + ev.kind + (ev.done ? " done" : "") + '" style="' + style + '"' +
-          (ev.id ? ' data-task="' + esc(ev.id) + '"' : ' data-ev="' + regEv(ev, y) + '"') + ' title="' + esc(ev.title + (ev.sub ? "\n" + ev.sub : "")) + '">' +
+        var st = evStatus(ev, y);
+        var dataAttr = (ev.clave || !ev.id) ? ' data-ev="' + regEv(ev, y) + '"' : ' data-task="' + esc(ev.id) + '"';
+        html += '<button type="button" class="ev ' + ev.kind + " " + st + '" style="' + style + '"' +
+          dataAttr + ' title="' + esc(ev.title + (ev.sub ? "\n" + ev.sub : "")) + '">' +
           "<b>" + esc(ev.title) + "</b>" + (hgt > 30 && ev.sub ? "<small>" + esc(ev.sub) + "</small>" : "") + "</button>";
       });
       dd.marks.forEach(function (m) {
         if (m.s < CAL_START * 60 || m.s > CAL_END * 60) return;
-        html += '<div class="mk ' + m.cls + '" style="top:' + ((m.s - CAL_START * 60) / 60 * HP) + 'px"><button type="button" data-ev="' + regEv(m, y) + '" title="' + esc(m.title + " · " + hm(m.s)) + '">' +
+        var mst = evStatus(m, y);
+        html += '<div class="mk ' + m.cls + " " + mst + '" style="top:' + ((m.s - CAL_START * 60) / 60 * HP) + 'px"><button type="button" data-ev="' + regEv(m, y) + '" title="' + esc(m.title + " · " + hm(m.s)) + '">' +
           esc(hm(m.s) + " " + m.title) + "</button></div>";
       });
       if (y === tdy && nowMin >= CAL_START * 60 && nowMin <= CAL_END * 60) html += '<div class="nowline" style="top:' + ((nowMin - CAL_START * 60) / 60 * HP) + 'px"></div>';
@@ -1306,6 +1403,31 @@ details.mats > summary:hover { background: var(--bg-surface); }
     $("fjQuick").innerHTML = links.join("");
     $("fjHint").textContent = x.kind === "class" ? "Las clases salen de la pestaña Horario de tu hoja." : x.kind === "plan" ? "Los bloques de estudio se editan en la pestaña Plan." :
       x.kind === "ipn" ? "Viene de la pestaña Calendario IPN." : "Las actividades fijas se editan en la pestaña Fijas de tu hoja.";
+    // Botón "marcar como hecha hoy" (y botón "abrir asignación" si el bloque viene de una tarea).
+    var btn = $("fjToggleHecho"), st = $("fjStatus");
+    if (x.clave) {
+      var done = hecho(x.clave, x.ymd), stLabel = evStatus(x, x.ymd);
+      btn.hidden = false;
+      btn.textContent = done ? "✓ Hecha · desmarcar" : "Marcar como hecha";
+      btn.className = "btn" + (done ? " done" : "");
+      btn.onclick = function () {
+        btn.disabled = true;
+        run(api.toggleHecho(x.clave, x.ymd, !done)).then(function () { $("dlgFija").close(); });
+      };
+      if (stLabel === "done") { st.hidden = false; st.textContent = "Hecha"; st.className = "pill done"; }
+      else if (stLabel === "miss") { st.hidden = false; st.textContent = "Pendiente"; st.className = "pill miss"; }
+      else { st.hidden = true; }
+    } else { btn.hidden = true; st.hidden = true; }
+    // Si es un bloque del Plan con tarea, agrega un link para abrir la asignación completa.
+    if (x.kind === "plan" && x.id) {
+      var abrirId = x.id;
+      var link = '<a class="qa" href="#" data-open-task="' + esc(abrirId) + '">' + ICON_CAL + "<span>Abrir asignación " + esc(abrirId) + "</span></a>";
+      $("fjQuick").insertAdjacentHTML("afterbegin", link);
+      $("fjQuick").querySelector("[data-open-task]").addEventListener("click", function (ev) {
+        ev.preventDefault(); $("dlgFija").close();
+        var tt = taskById(abrirId); if (tt) openForm(tt); else toast("No encontré " + abrirId);
+      });
+    }
     $("dlgFija").showModal();
   }
   $("calMode").addEventListener("click", function (ev) {
