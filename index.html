@@ -2046,9 +2046,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
     // Cursos / certificaciones: asignaciones con temario o con rango
     dp.forEach(function (t) {
       var mods = state.temario.filter(function (m) { return m.camino === t.id; });
-      if (!mods.length && !(t.inicio && t.fecha && !isSchoolTask(t))) return;
+      // Caminos de cursos y certificaciones: con temario, o con inicio y fecha, o cualquier curso/certificación no escolar con inicio
+      if (!mods.length && isSchoolTask(t)) return;
+      if (!mods.length && !t.inicio && !t.fecha) return;
       var fechas = mods.map(function (m) { return m.fecha; }).filter(Boolean).sort();
-      var desde = t.inicio || fechas[0] || tdy, hasta = t.fecha || fechas[fechas.length - 1] || desde;
+      var desde = t.inicio || fechas[0] || tdy;
+      var hasta = t.fecha || fechas[fechas.length - 1];
+      if (!hasta) { var d0 = parseYMD(desde); hasta = ymdOf(new Date(d0.getFullYear(), d0.getMonth() + 4, d0.getDate())); }
       var hs = mods.map(function (m) {
         return { ymd: m.fecha || desde, label: m.modulo, sub: (m.bloque ? m.bloque + " · " : "") + (m.lecciones ? m.lecciones + " lecciones" : "Módulo"), kind: "modulo", done: m.hecho,
                  miss: !m.hecho && m.fecha && m.fecha < tdy, modulo: m };
