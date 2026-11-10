@@ -497,6 +497,57 @@ details.mats > summary:hover { background: var(--bg-surface); }
 .pgmod:hover, .pgdel:hover { color: var(--text-primary); border-color: var(--border-strong); }
 .mpct { display: block; height: 5px; background: var(--bg-input); border-radius: 99px; overflow: hidden; margin: 4px 0; } .mpct i { display: block; height: 100%; background: var(--color-ok); }
 @media (max-width: 640px) { .pghead { grid-template-columns: 1fr; } .pgstat { justify-content: space-between; } .rnode { max-width: none; } }
+
+/* Progreso v2: camino tipo mapa */
+.pr-stage { position: relative; width: 100%; margin-top: 12px; background: radial-gradient(900px 400px at 50% -10%, rgba(255,255,255,.035), transparent 60%), var(--bg-lane); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
+.pr-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pr-halo { fill: none; stroke-width: 36; stroke-linecap: round; opacity: .14; }
+.pr-base { fill: none; stroke: #1F1F1F; stroke-width: 24; stroke-linecap: round; filter: drop-shadow(0 1px 0 rgba(0,0,0,.6)); }
+.pr-dash { fill: none; stroke: #3A3A3A; stroke-width: 2; stroke-dasharray: 2 14; stroke-linecap: round; opacity: .9; }
+.pr-done { fill: none; stroke-width: 14; stroke-linecap: round; opacity: .95; }
+.pr-stalk { stroke-width: 1.8; stroke-dasharray: 3 4; opacity: .55; fill: none; }
+.pr-viajero { filter: drop-shadow(0 0 10px rgba(255,255,255,.35)); }
+.pr-vh { opacity: .25; } .pr-vc { fill: #FAFAFA; stroke: #0A0A0A; stroke-width: 1.8; }
+.pin.ok, .pin.bad, .pin.now { filter: drop-shadow(0 4px 10px rgba(0,0,0,.6)); }
+.pin .pk { stroke: #0A0A0A; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pin .pks { stroke: none; }
+
+.pr-zonas { position: absolute; inset: 0; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; opacity: .06; }
+.pr-zonas b { font: 900 clamp(48px, 10vw, 140px)/1 var(--font-display); letter-spacing: .18em; text-transform: uppercase; }
+
+.pr-card { position: absolute; z-index: 3; padding: 10px 12px; display: grid; gap: 3px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-card); font-size: 12px; color: var(--text-secondary); line-height: 1.35; transition: var(--transition-base); }
+.pr-card.clickable { cursor: pointer; } .pr-card.clickable:hover { border-color: var(--text-primary); transform: translateY(-2px); }
+.pr-card.corte { border-left: 3px solid var(--color-ok); }
+.pr-card.ok { border-color: color-mix(in oklab, var(--color-ok) 60%, var(--border-default)); }
+.pr-card.bad { border-color: color-mix(in oklab, var(--color-error) 65%, var(--border-default)); }
+.pr-card.now { border-color: color-mix(in oklab, #FAFAFA 50%, var(--border-default)); box-shadow: 0 0 0 2px rgba(250,250,250,.08), var(--shadow-card); }
+.pr-card.inicio, .pr-card.meta { background: transparent; border-style: dashed; }
+.pr-kicker { display: flex; align-items: center; gap: 6px; }
+.pr-k { font-size: 11px; color: var(--text-muted); letter-spacing: .04em; }
+.pr-chip { margin-left: auto; font: 700 9px/1 var(--font-display); letter-spacing: .12em; color: var(--c); background: color-mix(in oklab, var(--c) 18%, transparent); padding: 3px 7px; border-radius: 99px; }
+.pr-t { color: var(--text-primary); font: 700 13px/1.25 var(--font-display); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pr-s { font-size: 11px; color: var(--text-muted); }
+.pr-a { font-size: 11px; color: var(--color-link); } .pr-go { font-size: 10px; color: var(--text-muted); margin-top: 2px; letter-spacing: .04em; text-transform: uppercase; }
+.pr-img { display: block; margin-top: 4px; border-radius: 6px; overflow: hidden; }
+.pr-img img { width: 100%; max-height: 120px; object-fit: cover; display: block; }
+.pr-mes { height: 5px; background: var(--bg-input); border-radius: 99px; overflow: hidden; margin: 4px 0 2px; } .pr-mes i { display: block; height: 100%; }
+
+/* HUD + mini-mapa */
+.pr-hud { position: sticky; top: 8px; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 8px 14px; margin: 12px 0 -4px; background: color-mix(in oklab, var(--bg-surface) 88%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--border-default); border-radius: var(--radius-md); font-size: 12px; color: var(--text-secondary); flex-wrap: wrap; }
+.pr-hud-k { color: var(--text-primary); font-weight: 600; letter-spacing: .02em; }
+.pr-hud-n { color: var(--text-muted); } .pr-hud-n b { color: var(--text-primary); font: 700 13px var(--font-display); }
+.pr-mini { position: relative; flex: 1 1 180px; min-width: 160px; height: 14px; }
+.pr-mini-bar { position: absolute; left: 0; right: 0; top: 6px; height: 3px; background: var(--border-strong); border-radius: 99px; overflow: hidden; }
+.pr-mini-bar i { display: block; height: 100%; border-radius: 99px; transition: width 400ms ease-out; }
+.pr-mini-dot { position: absolute; top: 3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; border: 1.5px solid var(--bg-surface); }
+.pr-mini-dot.ok { background: var(--color-ok) !important; } .pr-mini-dot.bad { background: var(--color-error) !important; }
+
+@media (max-width: 760px) {
+  .pr-hud { position: static; }
+  .pr-zonas b { font-size: clamp(32px, 14vw, 72px); writing-mode: vertical-rl; transform: rotate(180deg); }
+  .pr-zonas { justify-content: flex-end; padding-right: 10px; opacity: .05; }
+}
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -2054,64 +2105,210 @@ details.mats > summary:hover { background: var(--bg-surface); }
       $("pgOver").innerHTML = total ? list.map(pgCard).join("") : '<p class="pgempty">Todavía no hay caminos en este filtro.</p>';
     } else renderRoad(sel);
   }
-  function pinSVG(kind, st, color) {
-    var fill = st === "ok" ? "var(--color-ok)" : st === "bad" ? "var(--color-error)" : st === "now" ? color : "var(--bg-surface-2)";
-    var glyph = st === "ok" ? '<path d="M-4 -17 l3 3 l6 -6" class="pk"/>' : kind === "corte" ? '<path d="M0 -21 l1.8 3.8 4.1.5 -3 2.9.8 4.1 -3.7-2 -3.7 2 .8-4.1 -3-2.9 4.1-.5z" class="pks"/>' : kind === "meta" ? '<path d="M-3 -10 v-12 M-3 -22 h9 l-2 3.5 2 3.5 h-9" class="pk"/>' : st === "bad" ? '<path d="M0 -21 v6 M0 -11.5 v.5" class="pk"/>' : '<circle cx="0" cy="-17" r="3" class="pks"/>';
-    return '<g class="pin ' + st + '"><path d="M0 0 C-10 -12 -15 -18 -15 -24 A15 15 0 1 1 15 -24 C15 -18 10 -12 0 0z" style="fill:' + fill + '"/>' + glyph + "</g>";
+  /* --- Geometría del camino: desktop serpentea izq-der-izq, móvil "S" vertical --- */
+  function buildRoad(W, nodes) {
+    var n = nodes.length;
+    var narrow = W < 760;
+    if (narrow) {
+      var M = { X: 46, AMP: 20, WAVE: 320, TOP: 80, GAP: Math.max(130, Math.min(190, 1600 / n)), STEP: 8, BOT: 100 };
+      var anchors = [], yy = M.TOP;
+      nodes.forEach(function (_, i) { if (i) yy += M.GAP; anchors.push(yy); });
+      var H = (anchors[anchors.length - 1] || M.TOP) + M.BOT;
+      var s = [];
+      for (var y = 0; y <= H; y += M.STEP) {
+        var x = M.X + M.AMP * Math.sin(y / M.WAVE * Math.PI * 2);
+        s.push({ x: x, y: y });
+      }
+      return { mode: "v", w: W, h: H, samples: s, anchors: anchors.map(function (y) { return { y: y }; }) };
+    }
+    var D = { MARGIN: 92, ROW_GAP: 300, TOP: 130, STEP: 9, WAVE: 18, BULGE: 70, BOT: 150 };
+    var rowW = W - 2 * D.MARGIN, GAP = Math.max(280, Math.min(520, rowW / Math.max(2, Math.min(5, n))));
+    var anchorsP = [], pos = 0;
+    nodes.forEach(function (_, i) { if (i) pos += GAP; anchorsP.push(pos); });
+    var totalP = (anchorsP[anchorsP.length - 1] || 0) + GAP * 0.6;
+    var rows = Math.max(2, Math.ceil(totalP / rowW));
+    var s = [], posAt = [];
+    var push = function (x, y) { s.push({ x: x, y: y }); };
+    for (var r = 0; r < rows; r++) {
+      var dir = r % 2 === 0 ? 1 : -1, yRow = D.TOP + r * D.ROW_GAP;
+      var nSteps = Math.ceil(rowW / D.STEP);
+      for (var i = 0; i <= nSteps; i++) {
+        var f = i / nSteps;
+        var x = dir > 0 ? D.MARGIN + f * rowW : D.MARGIN + rowW - f * rowW;
+        var y = yRow + D.WAVE * Math.sin(f * Math.PI * 4) * Math.sin(f * Math.PI);
+        push(x, y);
+      }
+      if (r < rows - 1) {
+        var xe = dir > 0 ? D.MARGIN + rowW : D.MARGIN, y0 = yRow, y1 = yRow + D.ROW_GAP, cx = xe + dir * D.BULGE;
+        for (var j = 1; j <= 36; j++) {
+          var t = j / 36, mt = 1 - t;
+          var xb = mt*mt*mt*xe + 3*mt*mt*t*cx + 3*mt*t*t*cx + t*t*t*xe;
+          var yb = mt*mt*mt*y0 + 3*mt*mt*t*(y0 + D.ROW_GAP*0.06) + 3*mt*t*t*(y1 - D.ROW_GAP*0.06) + t*t*t*y1;
+          push(xb, yb);
+        }
+      }
+    }
+    // longitudes
+    var len = 0; s[0].L = 0;
+    for (var k = 1; k < s.length; k++) { len += Math.hypot(s[k].x - s[k-1].x, s[k].y - s[k-1].y); s[k].L = len; }
+    var total = len;
+    anchorsP.forEach(function (p) { posAt.push(total * (p / totalP)); });
+    return { mode: "h", w: W, h: D.TOP + (rows - 1) * D.ROW_GAP + D.BOT, samples: s, anchors: posAt.map(function (L) { return { L: L }; }), rows: rows };
   }
+  function atLen(g, L) {
+    var s = g.samples, total = s[s.length - 1].L || 0;
+    if (g.mode === "v") {
+      // In móvil usamos y como L
+      if (L < 0) L = 0; if (L > s[s.length - 1].y) L = s[s.length - 1].y;
+      var i = 1; while (i < s.length - 1 && s[i].y < L) i++;
+      var a = s[i-1], b = s[i], t = (b.y - a.y) ? (L - a.y) / (b.y - a.y) : 0;
+      var tx = b.x - a.x, ty = b.y - a.y, m = Math.hypot(tx, ty) || 1;
+      return { x: a.x + (b.x - a.x) * t, y: L, nx: ty / m, ny: -tx / m };
+    }
+    L = Math.max(0, Math.min(total, L));
+    var i = 1; while (i < s.length - 1 && s[i].L < L) i++;
+    var a = s[i-1], b = s[i], t = (b.L - a.L) ? (L - a.L) / (b.L - a.L) : 0;
+    var tx = b.x - a.x, ty = b.y - a.y, m = Math.hypot(tx, ty) || 1;
+    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, nx: -ty / m, ny: tx / m };
+  }
+  function pathD(samples, mode) {
+    if (!samples.length) return "";
+    var d = "M" + r1(samples[0].x) + " " + r1(samples[0].y);
+    for (var i = 1; i < samples.length; i++) d += " L" + r1(samples[i].x) + " " + r1(samples[i].y);
+    return d;
+  }
+  function r1(n) { return Math.round(n * 10) / 10; }
+
+  /* Pin (tipo mapa): cabeza con glifo + varilla punteada hacia la tarjeta */
+  function pinHead(kind, st, color) {
+    var fill = st === "ok" ? "#7FB89A" : st === "bad" ? "#E5484D" : st === "now" ? color : "#1C1C1C";
+    var stroke = st === "ok" || st === "bad" || st === "now" ? "#0A0A0A" : color;
+    var glyph = st === "ok" ? '<path d="M-5 -16 l3.3 3.3 l6.7 -6.7" class="pk"/>' :
+                st === "bad" ? '<circle cx="0" cy="-15" r="2.2" class="pks" fill="#0A0A0A"/><path d="M0 -21 v4" class="pk"/>' :
+                kind === "meta" ? '<path d="M-3 -10 v-13 M-3 -23 h9 l-2 3.5 2 3.5 h-9" class="pk"/>' :
+                kind === "inicio" ? '<circle cx="0" cy="-15" r="3" class="pks" fill="#0A0A0A"/>' :
+                kind === "corte" ? '<path d="M0 -21 l1.9 4 4.3.6 -3.1 3 .8 4.2 -3.9-2 -3.9 2 .8-4.2 -3.1-3 4.3-.6z" class="pks" fill="#0A0A0A"/>' :
+                kind === "examen" ? '<rect x="-4" y="-19" width="8" height="8" class="pks" fill="#0A0A0A"/><path d="M-2 -15 h4 M-2 -17 h4" class="pk" stroke="'+color+'"/>' :
+                kind === "modulo" ? '<path d="M-4 -19 h8 v8 h-8 z M-4 -15 h8" class="pk"/>' :
+                kind === "pago" ? '<circle cx="0" cy="-15" r="4" class="pks" fill="#0A0A0A"/><path d="M-2 -17 v4 M2 -17 v4 M0 -18 v6" class="pk" stroke="'+color+'"/>' :
+                kind === "mes" ? '<rect x="-4" y="-19" width="8" height="8" class="pks" fill="#0A0A0A"/><path d="M-4 -17 h8" class="pk" stroke="'+color+'"/>' :
+                '<circle cx="0" cy="-15" r="2.4" class="pks" fill="#0A0A0A"/>';
+    return '<g class="pin ' + st + '"><path d="M0 0 C-10 -11 -15 -17 -15 -22 A15 15 0 1 1 15 -22 C15 -17 10 -11 0 0z" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/>' + glyph + "</g>";
+  }
+  function pinTint(color) { return color; }
+
   function renderRoad(c) {
-    var wrap = $("pgDetail"), W = Math.max(320, wrap.clientWidth || 360), narrow = W < 640, tdy = ymdOf(today0());
+    var wrap = $("pgDetail"), W = Math.max(320, wrap.clientWidth || wrap.getBoundingClientRect().width || 360), tdy = ymdOf(today0());
+    // Nodos en orden
     var nodes = [{ ymd: c.desde, label: "Inicio", sub: fmtCorto(c.desde), kind: "inicio", done: c.desde <= tdy }]
       .concat(c.hitos.slice().sort(function (a, b) { return a.ymd < b.ymd ? -1 : a.ymd > b.ymd ? 1 : 0; }))
       .concat([{ ymd: c.hasta, label: c.meta || "Meta", sub: fmtCorto(c.hasta), kind: "meta", done: c.hasta <= tdy && c.hecho >= 100 }]);
-    var gap = 112, top = 50, H = top + (nodes.length - 1) * gap + 80, cx = narrow ? 34 : W / 2, amp = narrow ? 10 : 34, pts = nodes.map(function (n, i) {
-      return { x: cx + (i % 2 ? amp : -amp) * (i === 0 || i === nodes.length - 1 ? 0 : 1), y: top + i * gap };
-    });
-    var d = "M" + pts[0].x + " " + pts[0].y;
-    for (var i = 1; i < pts.length; i++) { var a = pts[i - 1], b = pts[i], m = (a.y + b.y) / 2; d += " C" + a.x + " " + m + " " + b.x + " " + m + " " + b.x + " " + b.y; }
-    // posición del viajero: entre el último nodo pasado y el siguiente
+    var g = buildRoad(W, nodes), samples = g.samples, total = (g.mode === "v" ? samples[samples.length-1].y : samples[samples.length-1].L) || 1, narrow = g.mode === "v";
+    // Posición del viajero: entre nodos pasados y los que vienen
     var ti = 0, tf = 0;
     for (var j = 0; j < nodes.length - 1; j++) {
-      if (nodes[j].ymd <= tdy) { ti = j; var s = parseYMD(nodes[j].ymd), e = parseYMD(nodes[j + 1].ymd); tf = tdy >= nodes[j + 1].ymd ? 1 : Math.max(0, Math.min(1, (today0() - s) / ((e - s) || 1))); }
+      if (nodes[j].ymd <= tdy) {
+        ti = j;
+        var s0 = parseYMD(nodes[j].ymd), e0 = parseYMD(nodes[j + 1].ymd);
+        tf = tdy >= nodes[j + 1].ymd ? 1 : Math.max(0, Math.min(1, (today0() - s0) / ((e0 - s0) || 1)));
+      }
     }
     if (nodes[0].ymd > tdy) { ti = 0; tf = 0; }
     var frac = Math.min(1, (ti + tf) / (nodes.length - 1));
-    var html = '<div class="road" style="height:' + H + 'px"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Camino de ' + esc(c.titulo) + '">' +
-      '<path id="rdBase" d="' + d + '" class="rd0"/><path id="rdDone" d="' + d + '" class="rd1" style="stroke:' + c.color + '"/><path d="' + d + '" class="rdc"/>';
+    // Posición de cada nodo sobre el camino
+    var anchorLens = g.anchors.map(function (a) { return g.mode === "v" ? a.y : a.L; });
+    // SVG: halo, camino, velo, tramo recorrido
+    var d = pathD(samples, g.mode);
+    var svg = '<svg class="pr-svg" viewBox="0 0 ' + W + ' ' + g.h + '" width="' + W + '" height="' + g.h + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<defs><linearGradient id="prg-' + esc(c.id) + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="' + c.color + '" stop-opacity=".4"/><stop offset="100%" stop-color="' + c.color + '" stop-opacity=".9"/></linearGradient></defs>' +
+      '<path d="' + d + '" class="pr-halo" style="stroke:' + c.color + '"/>' +
+      '<path d="' + d + '" class="pr-base"/>' +
+      '<path d="' + d + '" class="pr-dash"/>' +
+      '<path id="pr-done-' + esc(c.id) + '" d="' + d + '" class="pr-done" style="stroke:url(#prg-' + esc(c.id) + ')"/>';
+    // pines + cards
+    var cards = "", stalks = "";
     nodes.forEach(function (n, i) {
-      var st = n.done ? "ok" : n.miss ? "bad" : (i === ti + 1 ? "now" : "");
-      html += '<g transform="translate(' + pts[i].x + " " + pts[i].y + ')">' + pinSVG(n.kind, st, c.color) + "</g>";
-    });
-    html += '<g id="rdMe"><circle r="9" class="me0" style="fill:' + c.color + '"/><circle r="4" class="me1"/></g></svg>';
-    nodes.forEach(function (n, i) {
-      var left = narrow ? false : (i % 2 === 1 && i !== nodes.length - 1), x = pts[i].x, st = n.done ? "ok" : n.miss ? "bad" : "";
-      var style = narrow ? "left:" + (cx + 34) + "px;right:0;top:" + (pts[i].y - 38) + "px" : (left ? "right:" + (W - x + 36) + "px;text-align:right" : "left:" + (x + 36) + "px") + ";top:" + (pts[i].y - 38) + "px";
-      var body = '<small>' + esc(n.kind === "inicio" ? "Inicio" : n.kind === "meta" ? "Meta" : fmtCorto(n.ymd)) + (n.sub && n.kind !== "inicio" && n.kind !== "meta" ? " · " + esc(n.sub) : "") + "</small><b>" + esc(n.label) + "</b>";
-      if (n.pctMes != null) body += '<span class="mpct"><i style="width:' + n.pctMes + '%"></i></span><small>' + n.pctMes + "% de cumplimiento</small>";
-      var acts = "";
-      if (n.task) acts = ' data-task="' + esc(n.task) + '"';
-      if (n.modulo) acts += ' data-mod="' + esc(n.modulo.modulo) + '"';
+      var p = atLen(g, anchorLens[i]);
+      var st = n.done ? "ok" : n.miss ? "bad" : (i === ti + 1 && nodes[0].ymd <= tdy ? "now" : "");
+      // Lado: desktop alterna según fila; móvil siempre derecha
+      var side;
+      if (narrow) side = "r";
+      else {
+        // calculo fila a partir de y
+        var row = Math.round((p.y - 130) / 300);
+        side = (i % 2 === 0) ? (row % 2 === 0 ? "u" : "d") : (row % 2 === 0 ? "d" : "u");
+      }
+      if (i === 0) side = narrow ? "r" : "d";
+      if (i === nodes.length - 1) side = narrow ? "r" : "u";
+      // extremo de la varilla
+      var off = narrow ? 70 : (side === "u" ? -80 : 80);
+      var cx = p.x + p.nx * off, cy = p.y + p.ny * off;
+      stalks += '<path d="M' + r1(p.x) + ' ' + r1(p.y) + ' L' + r1(cx) + ' ' + r1(cy) + '" class="pr-stalk" style="stroke:' + c.color + '"/>';
+      svg += '<g transform="translate(' + r1(p.x) + ' ' + r1(p.y) + ')">' + pinHead(n.kind, st, c.color) + "</g>";
+      // Card — posición absoluta con left/top en píxeles
+      var cardW = narrow ? Math.min(240, W - cx - 20) : 220;
+      var left = narrow ? cx + 8 : cx - cardW / 2;
+      // Ajuste de bordes
+      if (!narrow) { if (left < 8) left = 8; if (left + cardW > W - 8) left = W - 8 - cardW; }
+      var top = narrow ? cy - 26 : (side === "u" ? cy - 88 : cy + 8);
+      // Contenido
+      var kicker = n.kind === "inicio" ? "Inicio" : n.kind === "meta" ? "Meta" : fmtCorto(n.ymd);
+      var body;
       if (n.corte) {
         var cc = n.corte, img = cc.imagen ? (/^data:/.test(cc.imagen) ? cc.imagen : "https://drive.google.com/thumbnail?id=" + encodeURIComponent(cc.imagen) + "&sz=w800") : "";
-        body = "<small>" + esc(fmtCorto(cc.fecha)) + " · Corte semanal</small><b>" + esc(cc.nota || "Corte") + "</b>" +
-          (cc.link ? '<a href="' + esc(cc.link) + '" target="_blank" rel="noopener noreferrer">Ver link</a>' : "") +
-          (img ? '<a href="' + (/^data:/.test(img) ? "#" : "https://drive.google.com/file/d/" + encodeURIComponent(cc.imagen) + "/view") + '" target="_blank" rel="noopener noreferrer"><img loading="lazy" src="' + esc(img) + '" alt="Evidencia del corte"></a>' : "") +
-          '<button type="button" class="pgdel" data-delcorte="' + esc(cc.id) + '">Borrar corte</button>';
+        body = '<div class="pr-kicker"><span class="pr-k mono">' + esc(fmtCorto(cc.fecha)) + '</span><span class="pr-chip" style="--c:' + c.color + '">CORTE</span></div>' +
+               '<b class="pr-t">' + esc(cc.nota || "Corte") + "</b>" +
+               (cc.link ? '<a class="pr-a" href="' + esc(cc.link) + '" target="_blank" rel="noopener noreferrer">Ver link →</a>' : "") +
+               (img ? '<a class="pr-img" href="' + (/^data:/.test(img) ? "#" : "https://drive.google.com/file/d/" + encodeURIComponent(cc.imagen) + "/view") + '" target="_blank" rel="noopener noreferrer"><img loading="lazy" src="' + esc(img) + '" alt=""></a>' : "") +
+               '<button type="button" class="pgdel" data-delcorte="' + esc(cc.id) + '">Borrar</button>';
+      } else {
+        body = '<div class="pr-kicker"><span class="pr-k mono">' + esc(kicker) + '</span>' +
+               (n.kind !== "inicio" && n.kind !== "meta" ? '<span class="pr-chip" style="--c:' + c.color + '">' + esc(n.kind.toUpperCase()) + "</span>" : "") +
+               "</div><b class=\"pr-t\">" + esc(n.label) + "</b>" +
+               (n.sub ? '<small class="pr-s">' + esc(n.sub) + "</small>" : "") +
+               (n.pctMes != null ? '<div class="pr-mes"><i style="width:' + n.pctMes + '%;background:' + c.color + '"></i></div><small class="pr-s">' + n.pctMes + "% de cumplimiento</small>" : "") +
+               (n.modulo ? '<button type="button" class="pgmod" data-mod="' + esc(n.modulo.modulo) + '">' + (n.done ? "Desmarcar" : "Marcar hecho") + "</button>" : "") +
+               (n.task ? '<span class="pr-go">Abrir asignación →</span>' : "");
       }
-      html += '<div class="rnode ' + n.kind + " " + st + (n.corte ? " corte" : "") + '" style="' + style + '"' + acts + ">" + body +
-        (n.modulo ? '<button type="button" class="pgmod" data-mod="' + esc(n.modulo.modulo) + '">' + (n.done ? "Desmarcar" : "Marcar como hecho") + "</button>" : "") + "</div>";
+      var extraClass = (n.task ? " clickable" : "") + (n.corte ? " corte" : "");
+      cards += '<div class="pr-card ' + n.kind + " " + st + extraClass + '" style="left:' + r1(left) + "px;top:" + r1(top) + "px;width:" + cardW + 'px"' +
+        (n.task ? ' data-task="' + esc(n.task) + '"' : "") + ">" + body + "</div>";
     });
-    html += "</div>";
-    var head = '<div class="pghead" style="--c:' + c.color + '"><button class="btn ghost" id="pgBack" type="button">← Todos</button><div><span class="pgg">' + esc(c.grupo) + "</span><h2>" + esc(c.titulo) + "</h2><small>" + esc(c.sub) + "</small></div>" +
+    // Viajero
+    var vp = atLen(g, total * frac);
+    svg += '<g class="pr-viajero" transform="translate(' + r1(vp.x) + ' ' + r1(vp.y) + ')"><circle r="18" class="pr-vh" style="fill:' + c.color + '"/><circle r="7" class="pr-vc"/></g>';
+    svg += stalks + "</svg>";
+    // Zonas (nombre grande semitransparente de fondo por "tercios")
+    var zonaHTML = '<div class="pr-zonas">' +
+      '<b style="color:' + c.color + '">' + esc(c.grupo.toUpperCase()) + '</b></div>';
+    // HUD con minimapa y nombre del siguiente hito
+    var next = nodes[Math.min(nodes.length - 1, ti + (tf > 0 ? 1 : 0))];
+    var hud = '<div class="pr-hud" style="--c:' + c.color + '">' +
+      '<span class="pr-hud-k mono">' + c.rec + '% recorrido</span>' +
+      '<span class="pr-hud-n">Próximo: <b>' + esc(next ? next.label : "–") + "</b></span>" +
+      '<div class="pr-mini"><div class="pr-mini-bar"><i style="width:' + (frac * 100) + '%;background:' + c.color + '"></i></div>' +
+      nodes.map(function (n, i) {
+        var f = (anchorLens[i] / total) * 100;
+        return '<i class="pr-mini-dot ' + (n.done ? "ok" : n.miss ? "bad" : "") + '" style="left:' + f + '%;background:' + (n.done ? "var(--color-ok)" : n.miss ? "var(--color-error)" : c.color) + '"></i>';
+      }).join("") + "</div></div>";
+
+    var head = '<div class="pghead" style="--c:' + c.color + '">' +
+      '<button class="btn ghost" id="pgBack" type="button">← Todos</button>' +
+      '<div class="pgtitle"><span class="pgg mono">' + esc(c.grupo) + "</span><h2>" + esc(c.titulo) + "</h2><small>" + esc(c.sub) + "</small></div>" +
       '<div class="pgstat"><div><b>' + c.rec + '%</b><span>recorrido</span></div><div><b>' + c.hecho + '%</b><span>hecho</span></div></div>' +
       '<div class="pgbars"><div class="pgbar"><i style="width:' + c.rec + '%;background:var(--silver-dim);box-shadow:inset 0 0 0 1px var(--border-strong)"></i><i style="width:' + c.hecho + '%;background:' + c.color + '"></i></div><small>' + esc(c.detalle) + '</small></div>' +
       '<button class="btn primary" id="pgAddCorte" type="button" data-camino="' + esc(c.id) + '">+ Agregar corte</button></div>';
-    wrap.innerHTML = head + html;
-    var base = $("rdBase"), len = base.getTotalLength(), dn = $("rdDone");
-    dn.style.strokeDasharray = (len * frac) + " " + (len + 10);
-    var p = base.getPointAtLength(len * frac); $("rdMe").setAttribute("transform", "translate(" + p.x + " " + p.y + ")");
-    var meEl = $("rdMe"); if (meEl && meEl.scrollIntoView && !renderRoad._done) { renderRoad._done = true; }
+    wrap.innerHTML = head + hud + '<div class="pr-stage" style="height:' + g.h + 'px">' + zonaHTML + svg + cards + "</div>";
+    // Longitud real del camino para animar la línea recorrida
+    try {
+      var baseEl = document.querySelector("#pgDetail .pr-base"), done = document.getElementById("pr-done-" + c.id);
+      if (baseEl && done) {
+        var len = baseEl.getTotalLength();
+        done.style.strokeDasharray = (len * frac) + " " + (len + 10);
+      }
+    } catch (e) {}
   }
+
   /* Corte con evidencia */
   function resizeImage(file, max) {
     return new Promise(function (res, rej) {
