@@ -963,7 +963,8 @@ details.mats > summary:hover { background: var(--bg-surface); }
         return wait(board());
       },
       deleteCorte: function (id) { _cortes = _cortes.filter(function (x) { return x.id !== id; }); return wait(board()); },
-      toggleModulo: function (camino, modulo, done) { _temario.forEach(function (m) { if (m.camino === camino && m.modulo === modulo) m.hecho = !!done; }); return wait(board()); }
+      toggleModulo: function (camino, modulo, done) { _temario.forEach(function (m) { if (m.camino === camino && m.modulo === modulo) m.hecho = !!done; }); return wait(board()); },
+      togglePagoJandy: function (no, done) { return wait(board()); }
     };
   })();
 
@@ -975,7 +976,8 @@ details.mats > summary:hover { background: var(--bg-surface); }
     toggleHecho: function (clave, fecha, done) { return MODE === "demo" ? demo.toggleHecho(clave, fecha, done) : apiFetch("POST", { action: "hecho", clave: clave, fecha: fecha, done: done }); },
     saveCorte: function (c) { return MODE === "demo" ? demo.saveCorte(c) : apiFetch("POST", { action: "corte", corte: c }); },
     deleteCorte: function (id) { return MODE === "demo" ? demo.deleteCorte(id) : apiFetch("POST", { action: "corteDel", id: id }); },
-    toggleModulo: function (camino, modulo, done) { return MODE === "demo" ? demo.toggleModulo(camino, modulo, done) : apiFetch("POST", { action: "modulo", camino: camino, modulo: modulo, done: done }); }
+    toggleModulo: function (camino, modulo, done) { return MODE === "demo" ? demo.toggleModulo(camino, modulo, done) : apiFetch("POST", { action: "modulo", camino: camino, modulo: modulo, done: done }); },
+    togglePagoJandy: function (no, done) { return MODE === "demo" ? demo.togglePagoJandy(no, done) : apiFetch("POST", { action: "pagoJandy", no: no, done: done }); }
   };
 
   /* ------------ estado ------------ */
@@ -1023,6 +1025,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     state.hechos.forEach(function (h) { state.hechosSet[h.clave + "|" + h.fecha] = true; });
     state.cortes = res.cortes || [];
     state.caminos = res.caminos || [];
+    state.pagosJandy = res.pagosJandy || [];
     state.sinCaminos = MODE === "live" && res.caminos === undefined;
     state.temario = res.temario || [];
     state.miWhatsapp = res.miWhatsapp || "";
@@ -2072,15 +2075,28 @@ details.mats > summary:hover { background: var(--bg-surface); }
       if (!c.desde || !c.hasta) return;
       var hs = [], cnt = habitoCuenta(c.actividad, c.desde, c.hasta), det;
       if (c.tipo === "pago") {
-        var fs = state.fijas.filter(function (f) { return norm(f.actividad) === norm(c.actividad); }), n = 0, dn = 0;
-        for (var d = c.desde; d <= c.hasta; d = ymdOf(addDays(parseYMD(d), 1))) {
-          fs.forEach(function (f) {
-            if (!fijaToday(f, d, parseYMD(d).getDay())) return;
-            n++; var ok = hecho(claveFija(f), d); if (ok) dn++;
-            hs.push({ ymd: d, label: "Pago " + n, sub: f.actividad, kind: "pago", done: ok, miss: !ok && d < tdy });
+        // Si hay tabla "Pagos Jandy", úsala (plan a 24 quincenas). Si no, repite la actividad de Fijas.
+        var jandy = (c.id === "CAM-JAN") && state.pagosJandy && state.pagosJandy.length ? state.pagosJandy : null;
+        if (jandy) {
+          var dn = 0, saldo = jandy[0] ? jandy[0].saldo + jandy[0].monto : 0;
+          jandy.forEach(function (p) {
+            var ok = /^pagad/i.test(p.estado);
+            if (ok) dn++;
+            hs.push({ ymd: p.fecha, label: "Pago " + p.no, sub: "$" + p.monto.toLocaleString("es-MX") + " · saldo $" + p.saldo.toLocaleString("es-MX"),
+                      kind: "pago", done: ok, miss: !ok && p.fecha < tdy, pago: p });
           });
+          cnt = { total: jandy.length, done: dn }; det = dn + " de " + jandy.length + " pagos · saldo $" + (jandy.filter(function (p) { return !/^pagad/i.test(p.estado); }).reduce(function (s, p) { return s + p.monto; }, 0)).toLocaleString("es-MX");
+        } else {
+          var fs = state.fijas.filter(function (f) { return norm(f.actividad) === norm(c.actividad); }), n = 0, dn2 = 0;
+          for (var d = c.desde; d <= c.hasta; d = ymdOf(addDays(parseYMD(d), 1))) {
+            fs.forEach(function (f) {
+              if (!fijaToday(f, d, parseYMD(d).getDay())) return;
+              n++; var ok = hecho(claveFija(f), d); if (ok) dn2++;
+              hs.push({ ymd: d, label: "Pago " + n, sub: f.actividad, kind: "pago", done: ok, miss: !ok && d < tdy });
+            });
+          }
+          cnt = { total: n, done: dn2 }; det = dn2 + " de " + n + " pagos";
         }
-        cnt = { total: n, done: dn }; det = dn + " de " + n + " pagos";
       } else {
         for (var m0 = parseYMD(c.desde.slice(0, 8) + "01"); ymdOf(m0) <= c.hasta; m0 = new Date(m0.getFullYear(), m0.getMonth() + 1, 1)) {
           var ini = ymdOf(m0) < c.desde ? c.desde : ymdOf(m0), fin = ymdOf(new Date(m0.getFullYear(), m0.getMonth() + 1, 0)); if (fin > c.hasta) fin = c.hasta;
@@ -2282,6 +2298,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
                (n.sub ? '<small class="pr-s">' + esc(n.sub) + "</small>" : "") +
                (n.pctMes != null ? '<div class="pr-mes"><i style="width:' + n.pctMes + '%;background:' + c.color + '"></i></div><small class="pr-s">' + n.pctMes + "% de cumplimiento</small>" : "") +
                (n.modulo ? '<button type="button" class="pgmod" data-cam="' + esc(c.id) + '" data-mod="' + esc(n.modulo.modulo) + '">' + (n.done ? "Desmarcar" : "Marcar hecho") + "</button>" : "") +
+               (n.pago ? '<button type="button" class="pgmod" data-pago="' + n.pago.no + '">' + (n.done ? "Marcar como pendiente" : "Marcar como pagado") + "</button>" : "") +
                (n.task ? '<span class="pr-go">Abrir asignación →</span>' : "");
       }
       var extraClass = (n.task ? " clickable" : "") + (n.corte ? " corte" : "");
@@ -2371,6 +2388,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
     if (t.closest("#pgCorteHoy")) return openCorte(state.pg.sel || "");
     var dc = t.closest("[data-delcorte]"); if (dc) { if (confirm("¿Borrar este corte?")) run(api.deleteCorte(dc.dataset.delcorte), "Corte borrado"); return; }
     var mb = t.closest(".pgmod"); if (mb) {
+      if (mb.dataset.pago) {
+        var p = state.pagosJandy.filter(function (x) { return String(x.no) === mb.dataset.pago; })[0];
+        if (p) { var pag = /^pagad/i.test(p.estado); p.estado = pag ? "Pendiente" : "Pagado"; renderProg(); run(api.togglePagoJandy(p.no, !pag), pag ? "Pago marcado como pendiente" : "¡Pagado! ✓"); }
+        return;
+      }
       var m = state.temario.filter(function (x) { return x.camino === mb.dataset.cam && x.modulo === mb.dataset.mod; })[0];
       if (m) { m.hecho = !m.hecho; renderProg(); run(api.toggleModulo(m.camino, m.modulo, m.hecho)); } return;
     }

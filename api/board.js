@@ -6,7 +6,7 @@
 
 import crypto from "node:crypto";
 
-const ACTIONS = new Set(["save", "move", "delete", "hecho", "corte", "corteDel", "modulo"]);
+const ACTIONS = new Set(["save", "move", "delete", "hecho", "corte", "corteDel", "modulo", "pagoJandy"]);
 
 function sameText(a, b) {
   const ha = crypto.createHash("sha256").update(String(a)).digest();
@@ -45,6 +45,7 @@ export default async function handler(req, res) {
         clave: body.clave, fecha: body.fecha, done: body.done,              // hecho (marcar una ocurrencia)
         corte: body.corte,                                                   // corte con evidencia (nota, link, imagen)
         camino: body.camino, modulo: body.modulo,                            // modulo del temario
+        no: body.no,                                                          // número de pago (Pagos Jandy)
       };
       upstream = await fetch(APPS_SCRIPT_URL, {
         method: "POST",

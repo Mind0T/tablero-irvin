@@ -36,6 +36,7 @@ const SHEET_HECHOS = 'Hechos';
 const SHEET_CORTES = 'Cortes';
 const SHEET_CAMINOS = 'Caminos';
 const SHEET_TEMARIO = 'Temario';
+const SHEET_PAGOS_JANDY = 'Pagos Jandy';
 const TZ = 'America/Mexico_City';
 
 /* ================== CATEGORÍAS (edítalas aquí si cambian) ================== */
@@ -174,6 +175,7 @@ function doPost(e) {
       case 'corte':  return saveCorte_(body.corte);
       case 'corteDel': return deleteCorte_(body.id);
       case 'modulo': return toggleModulo_(body.camino, body.modulo, body.done);
+      case 'pagoJandy': return togglePagoJandy_(body.no, body.done);
       default: throw new Error('Acción no válida: ' + body.action);
     }
   }));
@@ -190,6 +192,7 @@ function getBoard_() {
            horario: optional_(getHorario_), plan: plan, calendario: optional_(getCalendarioIPN_),
            fijas: optional_(getFijas_), hechos: hechos,
            cortes: optional_(getCortes_), caminos: optional_(getCaminos_), temario: optional_(getTemario_),
+           pagosJandy: optional_(getPagosJandy_),
            estados: ESTADOS, prioridades: PRIORIDADES, miWhatsapp: myPhone_(), serverTime: now_() };
 }
 
@@ -315,6 +318,29 @@ function toggleModulo_(camino, modulo, done) {
     const vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues() : [];
     for (let i = 0; i < vals.length; i++) if (String(vals[i][0]).trim() === String(camino) && String(vals[i][2]).trim() === String(modulo)) {
       sh.getRange(i + 2, 6).setValue(!!done); break;
+    }
+    return getBoard_();
+  });
+}
+
+/** Pagos a Jandy: una fila por quincena (No, Fecha, Monto, Estado, Saldo, Notas). */
+function getPagosJandy_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PAGOS_JANDY);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues()
+    .filter(r => String(r[0]).trim() && fmtDay_(r[1]))
+    .map(r => ({ no: Number(r[0]) || 0, fecha: fmtDay_(r[1]), monto: Number(r[2]) || 0,
+                 estado: String(r[3] || '').trim(), saldo: Number(r[4]) || 0, notas: String(r[5] || '') }));
+}
+
+function togglePagoJandy_(no, done) {
+  const n = Number(no); if (!n) throw new Error('Falta número de pago.');
+  return withLock_(() => {
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PAGOS_JANDY);
+    if (!sh) throw new Error('No existe la pestaña Pagos Jandy.');
+    const vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
+    for (let i = 0; i < vals.length; i++) if ((Number(vals[i][0]) || 0) === n) {
+      sh.getRange(i + 2, 4).setValue(done ? 'Pagado' : 'Pendiente'); break;
     }
     return getBoard_();
   });
