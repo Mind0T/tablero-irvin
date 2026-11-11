@@ -82,6 +82,12 @@ header.top {
 }
 .logo { width: 54px; height: auto; display: block; filter: drop-shadow(0 0 14px rgba(255,255,255,.08)); }
 .eyebrow { font: 600 11px/1.2 var(--font-display); letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 6px; }
+.hub-back { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 4px 10px 4px 7px;
+  border: 1px solid var(--border-default); border-radius: 99px; background: rgba(255,255,255,.015);
+  font: 700 10.5px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-muted); transition: var(--transition-base); }
+.hub-back:hover { color: var(--text-primary); border-color: var(--border-strong); background: var(--bg-surface-2); }
+.hub-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 h1 { margin: 0; font: 800 clamp(26px, 4vw, 40px)/1 var(--font-display); color: var(--text-primary); letter-spacing: -.01em; }
 .motto { margin: 8px 0 0; font: italic 500 13px/1.2 var(--font-display); letter-spacing: .04em; color: var(--text-muted); }
 .clock { text-align: right; display: grid; gap: 4px; justify-items: end; }
@@ -569,7 +575,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   <header class="top">
     <img class="logo" src="assets/logo.png" width="54" height="95" alt="Logo de Irvin">
     <div>
-      <p class="eyebrow">Irvin · ESCOM IPN</p>
+      <a class="hub-back" href="https://irvingsoriano.com" title="Volver a irvingsoriano.com"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>irvingsoriano.com</span></a>
       <h1>Dame la Vida</h1>
       <p class="motto">Fake it till you make it</p>
     </div>
