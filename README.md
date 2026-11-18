@@ -138,3 +138,10 @@ vercel dev
 ```
 
 Si abres `index.html` sin backend entra en **modo demo** con datos de ejemplo.
+
+## 👨‍💻 Autor
+
+**Irving Soriano** — Estudiante de la Licenciatura en Ciencia de Datos en la Escuela Superior de Cómputo (ESCOM) del IPN.
+
+* **GitHub**: [Mind0T](https://github.com/Mind0T)
+* **LinkedIn**: [Irving Soriano](https://www.linkedin.com/in/irving-soriano)
