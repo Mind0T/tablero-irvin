@@ -566,6 +566,36 @@ details.mats > summary:hover { background: var(--bg-surface); }
 .pr-stage { background: radial-gradient(900px 400px at 50% -10%, rgba(255,255,255,.035), transparent 60%), rgba(15,15,15,.82); }
 @media (max-width: 760px) { .pr-zonas { padding: 0 6px 0 0; } .pr-zonas b { font-size: clamp(26px, 9vw, 44px); letter-spacing: .1em; white-space: nowrap; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* ---- vista Pomodoro ---- */
+.pomo-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 0 30px; text-align: center; }
+.pomo-clock { font: 600 14px/1 ui-monospace, "SFMono-Regular", Menlo, monospace; color: var(--text-muted); letter-spacing: .1em; }
+.pomo-ring-wrap { position: relative; width: 260px; height: 260px; max-width: 80vw; max-height: 80vw; }
+.pomo-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.pomo-ring-bg { fill: none; stroke: var(--border-default); stroke-width: 12; }
+.pomo-ring-fg { fill: none; stroke: var(--p-nor); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
+.pomo-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+.pomo-phase { font: 700 12px/1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); }
+.pomo-phase.work { color: var(--p-nor); }
+.pomo-phase.break { color: var(--p-imp); }
+.pomo-time { font: 700 clamp(42px, 13vw, 62px)/1 ui-monospace, "SFMono-Regular", Menlo, monospace; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.pomo-count { font: 600 12px/1 var(--font-display); color: var(--text-secondary); }
+.pomo-act { display: flex; flex-direction: column; gap: 3px; color: var(--text-secondary); }
+.pomo-act b { font: 700 20px/1.2 var(--font-display); color: var(--text-primary); }
+.pomo-range { font: 500 12px/1 ui-monospace, monospace; color: var(--text-muted); }
+.pomo-meta { font-size: 13px; color: var(--text-secondary); min-height: 16px; }
+.pomo-dots { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; max-width: 340px; }
+.pomo-dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--border-strong); display: inline-block; }
+.pomo-dots i.done { background: var(--p-nor); }
+.pomo-dots i.now { background: var(--p-nor); box-shadow: 0 0 0 3px var(--p-nor-bg); }
+.pomo-list { width: min(440px, 94vw); display: grid; gap: 4px; margin-top: 4px; }
+.pomo-li { display: flex; align-items: center; gap: 10px; padding: 7px 11px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-surface); font-size: 13px; }
+.pomo-li.on { border-color: var(--p-nor); background: var(--p-nor-bg); }
+.pomo-li-t { font: 600 12px/1 ui-monospace, monospace; color: var(--text-muted); min-width: 42px; }
+.pomo-li-n { flex: 1; text-align: left; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pomo-li.on .pomo-li-n { color: var(--text-primary); }
+.pomo-li-p { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.pomo-note { font-size: 12px; line-height: 1.5; color: var(--text-muted); max-width: 440px; }
+.pomo-empty { color: var(--text-muted); font-size: 13px; }
 </style>
 </head>
 <body data-ambito="Desarrollo profesional">
@@ -585,6 +615,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
         <button type="button" data-view="board" aria-pressed="true">Tablero</button>
         <button type="button" data-view="cal" aria-pressed="false">Calendario</button>
         <button type="button" data-view="prog" aria-pressed="false">Progreso</button>
+        <button type="button" data-view="pomo" aria-pressed="false">Pomodoro</button>
       </div>
       <div class="seg2" role="group" aria-label="Cambiar entre escuela y personal" id="scopeSwitch">
         <button type="button" data-ambito="Desarrollo profesional" aria-pressed="true"><span class="long">Desarrollo profesional</span><span class="short">DP</span> <small id="cntDP"></small></button>
@@ -624,6 +655,29 @@ details.mats > summary:hover { background: var(--bg-surface); }
     <div class="pgchips" id="pgChips" aria-label="Elegir una actividad"></div>
     <div class="pgbanner" id="pgViejo" hidden><span>Faltan tus caminos de medicina, pagos y hábitos porque el Apps Script sigue en una versión anterior. Pega el <b>Code.gs</b> nuevo y publica: Implementar → Gestionar implementaciones → ✏️ → Nueva versión.</span></div>
     <div id="pgDetail"></div>
+  </section>
+
+  <!-- vista pomodoro -->
+  <section id="pomoView" style="display:grid;gap:12px;" hidden>
+    <div class="pomo-wrap">
+      <div class="pomo-clock" id="pomoClock">--:--:--</div>
+      <div class="pomo-ring-wrap">
+        <svg class="pomo-ring" viewBox="0 0 260 260" aria-hidden="true">
+          <circle class="pomo-ring-bg" cx="130" cy="130" r="120"/>
+          <circle class="pomo-ring-fg" id="pomoRing" cx="130" cy="130" r="120"/>
+        </svg>
+        <div class="pomo-center">
+          <span class="pomo-phase" id="pomoPhase">—</span>
+          <span class="pomo-time" id="pomoTime">--:--</span>
+          <span class="pomo-count" id="pomoCount"></span>
+        </div>
+      </div>
+      <div class="pomo-act" id="pomoAct"></div>
+      <div class="pomo-meta" id="pomoMeta"></div>
+      <div class="pomo-dots" id="pomoDots" aria-hidden="true"></div>
+      <div class="pomo-list" id="pomoList"></div>
+      <p class="pomo-note">Los pomodoros corren según el reloj, anclados a la hora de inicio de cada actividad: 25 min de enfoque · 5 de descanso. Entres cuando entres, el ciclo ya va corriendo con la hora real.</p>
+    </div>
   </section>
 
   <!-- vista calendario -->
@@ -994,7 +1048,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   var $ = function (id) { return document.getElementById(id); };
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   state.ambito = store("irvin.ambito") === "Personal" ? "Personal" : DP;
-  state.view = ["cal", "prog"].indexOf(store("irvin.view")) > -1 ? store("irvin.view") : "board";
+  state.view = ["cal", "prog", "pomo"].indexOf(store("irvin.view")) > -1 ? store("irvin.view") : "board";
   state.calMode = store("irvin.calMode") || (window.innerWidth < 700 ? "day" : "week");
   if (["month", "week", "day"].indexOf(state.calMode) === -1) state.calMode = "week";
   accessCode = store("irvin.code") || "";
@@ -1104,11 +1158,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
     $("boardView").hidden = state.view !== "board";
     $("calView").hidden = state.view !== "cal";
     $("progView").hidden = state.view !== "prog";
+    $("pomoView").hidden = state.view !== "pomo";
     $("scopeSwitch").hidden = state.view !== "board";
     $("progress").hidden = state.view !== "board";
     Array.prototype.forEach.call($("viewSwitch").querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === state.view)); });
     $("t_responsable").innerHTML = state.team.map(function (p) { return "<option>" + esc(p.nombre) + "</option>"; }).join("");
-    if (state.view === "board") { renderFilters(); renderBoard(); } else if (state.view === "prog") renderProg(); else renderCal();
+    if (state.view === "board") { renderFilters(); renderBoard(); } else if (state.view === "prog") renderProg(); else if (state.view === "pomo") renderPomo(); else renderCal();
   }
 
   function renderHeader() {
@@ -1139,8 +1194,99 @@ details.mats > summary:hover { background: var(--bg-surface); }
   function tick() {
     var now = new Date(), p = fmtHora.formatToParts(now), get = function (k) { return (p.filter(function (x) { return x.type === k; })[0] || {}).value || "00"; };
     $("clock").innerHTML = "<b>" + get("hour") + ":" + get("minute") + "<small>" + get("second") + "</small></b><span>" + esc(fmtFecha.format(now).replace(/^./, function (c) { return c.toUpperCase(); })) + " · CDMX</span>";
+    if (state.view === "pomo" && loadedOnce) pomoTick();
   }
   setInterval(tick, 1000);
+
+  /* ------------ Pomodoro ------------ */
+  var POMO_WORK = 25, POMO_BREAK = 5, POMO_CYCLE = 30;   // minutos
+  var POMO_C = 2 * Math.PI * 120;                         // circunferencia del anillo
+  var pomoCache = { ymd: null, blocks: [] }, pomoListKey = "";
+
+  function pomoBlocksToday() {
+    var y = ymdOf(today0());
+    if (pomoCache.ymd !== y) {
+      pomoCache.ymd = y;
+      try {
+        pomoCache.blocks = dayData(y).timed.filter(function (b) {
+          return b.s != null && b.e != null && b.e > b.s;
+        }).sort(function (a, b) { return a.s - b.s; });
+      } catch (e) { pomoCache.blocks = []; }
+    }
+    return pomoCache.blocks;
+  }
+  function pomoTotal(durMin) {
+    var full = Math.floor(durMin / POMO_CYCLE);
+    if (durMin - full * POMO_CYCLE >= POMO_WORK) full++;
+    return Math.max(1, full);
+  }
+  function pomoMMSS(sec) { sec = Math.max(0, Math.round(sec)); return pad(Math.floor(sec / 60)) + ":" + pad(sec % 60); }
+  function pomoDur(sec) {
+    sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec / 60), h = Math.floor(m / 60);
+    if (h) return h + " h " + (m % 60) + " min"; if (m) return m + " min"; return sec + " s";
+  }
+  function renderPomo() { pomoCache.ymd = null; pomoListKey = ""; pomoBlocksToday(); pomoTick(); }
+
+  function pomoList(cur) {
+    var blocks = pomoBlocksToday();
+    var key = pomoCache.ymd + "|" + (cur ? cur.s + cur.title : "none") + "|" + blocks.length;
+    if (key === pomoListKey) return;
+    pomoListKey = key;
+    var html = blocks.map(function (b) {
+      var tot = pomoTotal(b.e - b.s), on = cur && b === cur ? " on" : "";
+      return "<div class='pomo-li" + on + "'><span class='pomo-li-t'>" + hm(b.s) + "</span><span class='pomo-li-n'>" + esc(b.title) +
+        "</span><span class='pomo-li-p'>" + tot + " 🍅</span></div>";
+    }).join("");
+    var el = $("pomoList"); if (el) el.innerHTML = html || "<p class='pomo-empty'>No hay bloques con horario hoy.</p>";
+  }
+  function pomoRing(frac, col) {
+    var r = $("pomoRing"); if (!r) return;
+    r.style.strokeDasharray = POMO_C;
+    r.style.strokeDashoffset = (POMO_C * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1);
+    r.style.stroke = col;
+  }
+  function pomoTick() {
+    if (state.view !== "pomo") return;
+    var now = new Date(), nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    var pc = $("pomoClock"); if (pc) pc.textContent = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+    var blocks = pomoBlocksToday(), cur = null, next = null;
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i];
+      if (nowSec >= b.s * 60 && nowSec < b.e * 60) { cur = b; break; }
+      if (nowSec < b.s * 60 && !next) next = b;
+    }
+    if (!cur) {
+      $("pomoPhase").textContent = next ? "En pausa" : "Libre";
+      $("pomoPhase").className = "pomo-phase";
+      $("pomoTime").textContent = next ? pomoMMSS(next.s * 60 - nowSec >= 3600 ? 0 : next.s * 60 - nowSec) : "✓";
+      if (next && next.s * 60 - nowSec >= 3600) $("pomoTime").textContent = "--:--";
+      $("pomoCount").textContent = "";
+      pomoRing(0, "var(--border-strong)");
+      $("pomoAct").innerHTML = next ? "Sigue: <b>" + esc(next.title) + "</b>" : "<b>Sin bloques por ahora</b>";
+      $("pomoMeta").textContent = next ? "Empieza a las " + hm(next.s) + " · en " + pomoDur(next.s * 60 - nowSec) : "Disfruta tu tiempo libre.";
+      $("pomoDots").innerHTML = "";
+      pomoList(null);
+      return;
+    }
+    var S = cur.s * 60, E = cur.e * 60, elapsed = nowSec - S, cycle = POMO_CYCLE * 60, work = POMO_WORK * 60;
+    var pos = elapsed % cycle, phaseWork = pos < work;
+    var remaining = phaseWork ? (work - pos) : (cycle - pos);
+    var idx = Math.floor(elapsed / cycle) + 1, total = pomoTotal(cur.e - cur.s);
+    var frac = phaseWork ? (pos / work) : ((pos - work) / (cycle - work));
+    var col = phaseWork ? "var(--p-nor)" : "var(--p-imp)";
+    pomoRing(frac, col);
+    $("pomoPhase").textContent = phaseWork ? "Enfócate" : "Descanso";
+    $("pomoPhase").className = "pomo-phase " + (phaseWork ? "work" : "break");
+    $("pomoTime").textContent = pomoMMSS(remaining);
+    $("pomoCount").textContent = "Pomodoro " + Math.min(idx, total) + " de " + total;
+    $("pomoAct").innerHTML = "<b>" + esc(cur.title) + "</b><span class='pomo-range'>" + hm(cur.s) + "–" + hm(cur.e) + "</span>";
+    var changeAt = hm(Math.round((nowSec + remaining) / 60) % 1440);
+    $("pomoMeta").textContent = (phaseWork ? "Descanso a las " : "Vuelve al enfoque a las ") + changeAt;
+    var dots = "";
+    for (var k = 0; k < total; k++) dots += "<i class='" + (k < idx - 1 ? "done" : (k === idx - 1 ? "now" : "")) + "'></i>";
+    $("pomoDots").innerHTML = dots;
+    pomoList(cur);
+  }
 
   /* ------------ filtros plegables ------------ */
   var ICON_CHEV = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg>';
@@ -2508,6 +2654,10 @@ details.mats > summary:hover { background: var(--bg-surface); }
     if (MODE !== "live" || !loadedOnce || !$("gate").hidden) return;
     if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop && document.visibilityState === "visible") load();
   }, REFRESH_MS);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible" || MODE !== "live" || !loadedOnce || !$("gate").hidden) return;
+    if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop) load();
+  });
 })();
 </script>
 </body>
