@@ -96,12 +96,13 @@ h1 { margin: 0; font: 800 clamp(26px, 4vw, 40px)/1 var(--font-display); color: v
 .clock span { font-size: 12px; color: var(--text-muted); }
 
 .switches { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
-.seg2 { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px;
+.seg2 { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 4px;
   background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-md); }
 .seg2 button {
-  height: 38px; padding: 0 16px; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer;
+  height: 38px; padding: 0 12px; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer;
   font: 700 13.5px var(--font-display); color: var(--text-muted); transition: var(--transition-base);
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
 }
 .seg2 button small { font: 500 11px var(--font-body); opacity: .8; }
 .seg2 button:hover { color: var(--text-primary); }
@@ -441,6 +442,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   header.top { padding: 18px; gap: 16px; }
   .logo { width: 42px; }
   .switches > * { flex: 1 1 100%; min-width: 0 !important; }
+  .seg2 button { font-size: 12px; padding: 0 6px; gap: 4px; }
   .grid2, .grid3 { grid-template-columns: 1fr 1fr; }
   .grid2 .wide, .grid3 .wide { grid-column: 1 / -1; }
   .search { width: 100%; }
@@ -599,6 +601,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
 .pomo-soundbtn { font: 600 12px/1 var(--font-display); color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
 .pomo-soundbtn[aria-pressed="false"] { color: var(--text-muted); opacity: .8; }
 .pomo-soundbtn:hover { border-color: var(--border-strong); }
+.pomo-donebtn { font: 700 13.5px var(--font-display); color: var(--text-primary); background: var(--p-nor-bg); border: 1px solid var(--p-nor); border-radius: 999px; padding: 10px 20px; cursor: pointer; transition: var(--transition-base); }
+.pomo-donebtn:hover { filter: brightness(1.1); }
+.pomo-donebtn.done { background: var(--bg-surface); border-color: var(--border-strong); color: var(--text-secondary); }
+.pomo-li.done .pomo-li-n { opacity: .6; }
+.pomo-li-ok { color: var(--p-nor); font-weight: 700; }
 </style>
 </head>
 <body data-ambito="Desarrollo profesional">
@@ -677,6 +684,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       </div>
       <div class="pomo-act" id="pomoAct"></div>
       <div class="pomo-meta" id="pomoMeta"></div>
+      <button class="pomo-donebtn" id="pomoDone" type="button" hidden>✓ Marcar como hecha</button>
       <div class="pomo-dots" id="pomoDots" aria-hidden="true"></div>
       <div class="pomo-list" id="pomoList"></div>
       <button class="pomo-soundbtn" id="pomoSoundBtn" type="button" aria-pressed="true">🔊 Sonido</button>
@@ -1206,7 +1214,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   var POMO_WORK = 25, POMO_BREAK = 5, POMO_CYCLE = 30;   // minutos
   var POMO_C = 2 * Math.PI * 120;                         // circunferencia del anillo
   var pomoCache = { ymd: null, blocks: [] }, pomoListKey = "";
-  var pomoPrev = null, pomoSound = store("irvin.pomoSound") !== "0", pomoAC = null;
+  var pomoPrev = null, pomoSound = store("irvin.pomoSound") !== "0", pomoAC = null, pomoCurBlock = null;
   function pomoAudio() { try { if (!pomoAC) pomoAC = new (window.AudioContext || window.webkitAudioContext)(); if (pomoAC.state === "suspended") pomoAC.resume(); } catch (e) {} return pomoAC; }
   function pomoBeep(kind) {
     if (!pomoSound) return; var ac = pomoAudio(); if (!ac) return; var t0 = ac.currentTime;
@@ -1258,10 +1266,12 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var key = pomoCache.ymd + "|" + (cur ? cur.s + cur.title : "none") + "|" + blocks.length;
     if (key === pomoListKey) return;
     pomoListKey = key;
+    var y = pomoCache.ymd;
     var html = blocks.map(function (b) {
       var tot = pomoTotal(b.e - b.s), on = cur && b === cur ? " on" : "";
-      return "<div class='pomo-li" + on + "'><span class='pomo-li-t'>" + hm(b.s) + "</span><span class='pomo-li-n'>" + esc(b.title) +
-        "</span><span class='pomo-li-p'>" + tot + " 🍅</span></div>";
+      var dn = b.clave && hecho(b.clave, y);
+      return "<div class='pomo-li" + on + (dn ? " done" : "") + "'><span class='pomo-li-t'>" + hm(b.s) + "</span><span class='pomo-li-n'>" +
+        (dn ? "<span class='pomo-li-ok'>✓ </span>" : "") + esc(b.title) + "</span><span class='pomo-li-p'>" + tot + " 🍅</span></div>";
     }).join("");
     var el = $("pomoList"); if (el) el.innerHTML = html || "<p class='pomo-empty'>No hay bloques con horario hoy.</p>";
   }
@@ -1291,6 +1301,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       $("pomoAct").innerHTML = next ? "Sigue: <b>" + esc(next.title) + "</b>" : "<b>Sin bloques por ahora</b>";
       $("pomoMeta").textContent = next ? "Empieza a las " + hm(next.s) + " · en " + pomoDur(next.s * 60 - nowSec) : "Disfruta tu tiempo libre.";
       $("pomoDots").innerHTML = "";
+      pomoCurBlock = null; if ($("pomoDone")) $("pomoDone").hidden = true;
       pomoMaybeBeep(false, null, "idle|" + (next ? next.s : "none"));
       pomoList(null);
       return;
@@ -1312,9 +1323,23 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var dots = "";
     for (var k = 0; k < total; k++) dots += "<i class='" + (k < idx - 1 ? "done" : (k === idx - 1 ? "now" : "")) + "'></i>";
     $("pomoDots").innerHTML = dots;
+    pomoCurBlock = cur;
+    var db = $("pomoDone");
+    if (db) {
+      if (cur.clave) { var dn = hecho(cur.clave, ymdOf(today0())); db.hidden = false; db.textContent = dn ? "✓ Hecha · toca para desmarcar" : "✓ Marcar como hecha"; db.className = "pomo-donebtn" + (dn ? " done" : ""); }
+      else db.hidden = true;
+    }
     pomoMaybeBeep(true, phaseWork, cur.s + "|" + (phaseWork ? "w" : "b") + "|" + idx);
     pomoList(cur);
   }
+  if ($("pomoDone")) $("pomoDone").addEventListener("click", function () {
+    var cur = pomoCurBlock; if (!cur || !cur.clave) return;
+    var y = ymdOf(today0()), k = cur.clave + "|" + y, dn = !!state.hechosSet[k];
+    if (dn) delete state.hechosSet[k]; else state.hechosSet[k] = true;
+    pomoCache.ymd = null; pomoListKey = ""; pomoTick();
+    toast(dn ? "Desmarcada" : "¡Hecha! ✓");
+    run(api.toggleHecho(cur.clave, y, !dn));
+  });
   if ($("pomoSoundBtn")) $("pomoSoundBtn").addEventListener("click", function () {
     pomoSound = !pomoSound; store("irvin.pomoSound", pomoSound ? "1" : "0"); pomoSyncSound();
     if (pomoSound) { pomoAudio(); pomoBeep("focus"); }
