@@ -596,6 +596,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
 .pomo-li-p { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .pomo-note { font-size: 12px; line-height: 1.5; color: var(--text-muted); max-width: 440px; }
 .pomo-empty { color: var(--text-muted); font-size: 13px; }
+.pomo-soundbtn { font: 600 12px/1 var(--font-display); color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.pomo-soundbtn[aria-pressed="false"] { color: var(--text-muted); opacity: .8; }
+.pomo-soundbtn:hover { border-color: var(--border-strong); }
 </style>
 </head>
 <body data-ambito="Desarrollo profesional">
@@ -676,6 +679,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       <div class="pomo-meta" id="pomoMeta"></div>
       <div class="pomo-dots" id="pomoDots" aria-hidden="true"></div>
       <div class="pomo-list" id="pomoList"></div>
+      <button class="pomo-soundbtn" id="pomoSoundBtn" type="button" aria-pressed="true">🔊 Sonido</button>
       <p class="pomo-note">Los pomodoros corren según el reloj, anclados a la hora de inicio de cada actividad: 25 min de enfoque · 5 de descanso. Entres cuando entres, el ciclo ya va corriendo con la hora real.</p>
     </div>
   </section>
@@ -1202,6 +1206,28 @@ details.mats > summary:hover { background: var(--bg-surface); }
   var POMO_WORK = 25, POMO_BREAK = 5, POMO_CYCLE = 30;   // minutos
   var POMO_C = 2 * Math.PI * 120;                         // circunferencia del anillo
   var pomoCache = { ymd: null, blocks: [] }, pomoListKey = "";
+  var pomoPrev = null, pomoSound = store("irvin.pomoSound") !== "0", pomoAC = null;
+  function pomoAudio() { try { if (!pomoAC) pomoAC = new (window.AudioContext || window.webkitAudioContext)(); if (pomoAC.state === "suspended") pomoAC.resume(); } catch (e) {} return pomoAC; }
+  function pomoBeep(kind) {
+    if (!pomoSound) return; var ac = pomoAudio(); if (!ac) return; var t0 = ac.currentTime;
+    function tone(freq, start, dur, vol) {
+      var o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0 + start); g.gain.linearRampToValueAtTime(vol || 0.22, t0 + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur); o.connect(g); g.connect(ac.destination);
+      o.start(t0 + start); o.stop(t0 + start + dur + 0.03);
+    }
+    if (kind === "break") { tone(660, 0, 0.18); tone(440, 0.2, 0.34); }   // dos tonos descendentes: a descansar
+    else { tone(523, 0, 0.14); tone(784, 0.17, 0.30); }                    // dos tonos ascendentes: a enfocarse
+  }
+  function pomoMaybeBeep(inBlock, phaseWork, sig) {
+    if (pomoPrev && sig !== pomoPrev.sig && inBlock) {
+      if (pomoPrev.inBlock && pomoPrev.phaseWork === true && phaseWork === false) pomoBeep("break");
+      else if (pomoPrev.inBlock && pomoPrev.phaseWork === false && phaseWork === true) pomoBeep("focus");
+      else if (!pomoPrev.inBlock) pomoBeep("focus");
+    }
+    pomoPrev = { sig: sig, inBlock: inBlock, phaseWork: phaseWork };
+  }
+  function pomoSyncSound() { var sb = $("pomoSoundBtn"); if (sb) { sb.textContent = pomoSound ? "🔊 Sonido" : "🔇 Silencio"; sb.setAttribute("aria-pressed", String(pomoSound)); } }
 
   function pomoBlocksToday() {
     var y = ymdOf(today0());
@@ -1225,7 +1251,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec / 60), h = Math.floor(m / 60);
     if (h) return h + " h " + (m % 60) + " min"; if (m) return m + " min"; return sec + " s";
   }
-  function renderPomo() { pomoCache.ymd = null; pomoListKey = ""; pomoBlocksToday(); pomoTick(); }
+  function renderPomo() { pomoCache.ymd = null; pomoListKey = ""; pomoPrev = null; pomoAudio(); pomoSyncSound(); pomoBlocksToday(); pomoTick(); }
 
   function pomoList(cur) {
     var blocks = pomoBlocksToday();
@@ -1265,6 +1291,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       $("pomoAct").innerHTML = next ? "Sigue: <b>" + esc(next.title) + "</b>" : "<b>Sin bloques por ahora</b>";
       $("pomoMeta").textContent = next ? "Empieza a las " + hm(next.s) + " · en " + pomoDur(next.s * 60 - nowSec) : "Disfruta tu tiempo libre.";
       $("pomoDots").innerHTML = "";
+      pomoMaybeBeep(false, null, "idle|" + (next ? next.s : "none"));
       pomoList(null);
       return;
     }
@@ -1285,8 +1312,13 @@ details.mats > summary:hover { background: var(--bg-surface); }
     var dots = "";
     for (var k = 0; k < total; k++) dots += "<i class='" + (k < idx - 1 ? "done" : (k === idx - 1 ? "now" : "")) + "'></i>";
     $("pomoDots").innerHTML = dots;
+    pomoMaybeBeep(true, phaseWork, cur.s + "|" + (phaseWork ? "w" : "b") + "|" + idx);
     pomoList(cur);
   }
+  if ($("pomoSoundBtn")) $("pomoSoundBtn").addEventListener("click", function () {
+    pomoSound = !pomoSound; store("irvin.pomoSound", pomoSound ? "1" : "0"); pomoSyncSound();
+    if (pomoSound) { pomoAudio(); pomoBeep("focus"); }
+  });
 
   /* ------------ filtros plegables ------------ */
   var ICON_CHEV = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg>';
