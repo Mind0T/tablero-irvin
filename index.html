@@ -443,6 +443,49 @@ dialog.ro .mats-add, dialog.ro #btnSave, dialog.ro #btnDelete, dialog.ro #btnRec
 dialog.ro input, dialog.ro select, dialog.ro textarea { pointer-events: none; opacity: .8; }
 .ro-note { font-size: 12px; color: var(--text-muted); margin: -2px 0 8px; }
 body[data-role="editor"] .ro-note { display: none; }
+
+/* ---- vista Notas (tipo Keep) ---- */
+.notas-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.notas-hint { font-size: 12px; color: var(--text-muted); }
+body[data-role="reader"] .notas-bar .btn { display: none; }
+.notas-grid { columns: 260px; column-gap: 14px; }
+.notas-vacio { color: var(--text-muted); font-size: 14px; text-align: center; padding: 24px; }
+.nota { break-inside: avoid; -webkit-column-break-inside: avoid; margin: 0 0 14px; border: 1px solid var(--border-default); border-radius: 14px; background: var(--bg-surface); padding: 12px 12px 10px; }
+.nota[data-color="rojo"] { background: #3a2626; } .nota[data-color="naranja"] { background: #3a2f22; }
+.nota[data-color="amarillo"] { background: #3a371f; } .nota[data-color="verde"] { background: #24362a; }
+.nota[data-color="azul"] { background: #24303a; } .nota[data-color="morado"] { background: #322a3e; }
+.nota[data-color="rosa"] { background: #3a2634; } .nota[data-color="gris"] { background: #2d2f33; }
+:root[data-tema="claro"] .nota[data-color="rojo"]{background:#fdecec} :root[data-tema="claro"] .nota[data-color="naranja"]{background:#fcefdd}
+:root[data-tema="claro"] .nota[data-color="amarillo"]{background:#fbf6d6} :root[data-tema="claro"] .nota[data-color="verde"]{background:#e3f4e6}
+:root[data-tema="claro"] .nota[data-color="azul"]{background:#e2eefb} :root[data-tema="claro"] .nota[data-color="morado"]{background:#efe6f8}
+:root[data-tema="claro"] .nota[data-color="rosa"]{background:#fce4ef} :root[data-tema="claro"] .nota[data-color="gris"]{background:#eceef1}
+.nota-head { display: flex; align-items: flex-start; gap: 6px; }
+.nota-title { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--text-primary); font: 700 15px/1.3 var(--font-display); padding: 2px 0; }
+.nota-title:focus, .nota-body:focus, .it-text:focus, .it-new:focus { outline: none; }
+.nota-tools { display: flex; gap: 2px; flex-shrink: 0; }
+.nota-tools button { width: 26px; height: 26px; display: grid; place-items: center; font-size: 14px; background: transparent; border: 0; cursor: pointer; color: var(--text-muted); border-radius: 8px; }
+.nota-tools button:hover { background: rgba(255,255,255,.08); color: var(--text-primary); }
+body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, body[data-role="reader"] .curso, body[data-role="reader"] .it-del { display: none; }
+.nota-mig { font-size: 11px; color: var(--text-muted); margin: 2px 0 6px; }
+.nota-body { width: 100%; background: transparent; border: 0; color: var(--text-secondary); font: 400 14px/1.45 inherit; resize: vertical; min-height: 46px; padding: 2px 0; }
+.nota-items { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.nota-item { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.chk { width: 20px; height: 20px; border: 1.6px solid var(--border-strong); display: grid; place-items: center; font-size: 12px; flex-shrink: 0; background: transparent; cursor: pointer; color: var(--text-primary); border-radius: 6px; }
+.nota-item.estado-hecho .chk { background: var(--silver, #CDB08A); color: #111; border-color: transparent; }
+.curso { width: 20px; height: 20px; display: grid; place-items: center; font-size: 11px; flex-shrink: 0; opacity: .5; background: transparent; border: 0; cursor: pointer; color: var(--text-muted); border-radius: 6px; }
+.nota-item.estado-en_curso .curso { opacity: 1; color: #E0B341; }
+.it-text { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--text-primary); font-size: 13.5px; padding: 2px 0; }
+.nota-item.estado-hecho .it-text { text-decoration: line-through; color: var(--text-muted); }
+.nota-item.estado-en_curso .it-text { color: #E0B341; font-weight: 600; }
+.it-note { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,.07); padding: 1px 6px; border-radius: 99px; flex-shrink: 0; }
+.it-del { width: 22px; height: 22px; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; background: transparent; border: 0; cursor: pointer; color: var(--text-muted); border-radius: 6px; }
+.it-del:hover { color: #E06B6B; }
+.nota-additem { margin-top: 6px; }
+.it-new { width: 100%; background: transparent; border: 0; border-top: 1px dashed var(--border-default); color: var(--text-secondary); font-size: 13.5px; padding: 6px 0 2px; }
+.nota-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nota-palette button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+.nota-palette button[aria-pressed="true"] { border-color: var(--text-primary); }
+@media (max-width: 520px) { .notas-grid { columns: 1; } }
 .gate .row { display: flex; gap: 8px; width: 100%; }
 .gate .row input { flex: 1; min-width: 0; }
 
@@ -640,6 +683,7 @@ body[data-role="editor"] .ro-note { display: none; }
         <button type="button" data-view="cal" aria-pressed="false">Calendario</button>
         <button type="button" data-view="prog" aria-pressed="false">Progreso</button>
         <button type="button" data-view="pomo" aria-pressed="false">Pomodoro</button>
+        <button type="button" data-view="notas" aria-pressed="false">Notas</button>
       </div>
       <div class="seg2" role="group" aria-label="Cambiar entre escuela y personal" id="scopeSwitch">
         <button type="button" data-ambito="Desarrollo profesional" aria-pressed="true"><span class="long">Desarrollo profesional</span><span class="short">DP</span> <small id="cntDP"></small></button>
@@ -707,6 +751,16 @@ body[data-role="editor"] .ro-note { display: none; }
   </section>
 
   <!-- vista calendario -->
+  <section id="notasView" style="display:grid;gap:14px;" hidden>
+    <div class="notas-bar">
+      <button class="btn" id="btnNotaTexto" type="button">+ Texto</button>
+      <button class="btn" id="btnNotaCheck" type="button">+ Checklist</button>
+      <span class="notas-hint">Tus notas tipo Keep. No aparecen en el calendario, el tablero ni el pomodoro.</span>
+    </div>
+    <div id="notasGrid" class="notas-grid"></div>
+    <p id="notasVacio" class="notas-vacio" hidden>Aún no tienes notas. Crea una con “+ Texto” o “+ Checklist”.</p>
+  </section>
+
   <section id="calView" style="display:grid;gap:12px;" hidden>
     <div class="calbar">
       <div class="calnav">
@@ -1023,12 +1077,25 @@ body[data-role="editor"] .ro-note { display: none; }
       { etiqueta: "Citas IMSS digital", enlace: "https://www.imss.gob.mx/", notas: "", ambito: "Personal", categoria: "IMSS" }
     ];
     var _hechos = [], _cortes = [];
+    var _nidc = 0; function nid(p) { return p + (++_nidc); }
+    var _notas = [
+      { id: "n-leidos", titulo: "✅ Libros leídos", tipo: "checklist", color: "verde", cuerpo: "", orden: 1, moverA: "", items: [
+        { id: "li1", texto: "Sapiens", estado: "hecho", nota: "", orden: 1 }, { id: "li2", texto: "Ikigai", estado: "hecho", nota: "", orden: 2 } ] },
+      { id: "n-porleer", titulo: "📚 Por leer", tipo: "checklist", color: "azul", cuerpo: "", orden: 2, moverA: "n-leidos", items: [
+        { id: "pl1", texto: "De cerebros, mentes y máquinas", estado: "en_curso", nota: "", orden: 1 },
+        { id: "pl2", texto: "Homo Deus", estado: "pendiente", nota: "me quedé al 20%", orden: 2 },
+        { id: "pl3", texto: "Nexus", estado: "pendiente", nota: "", orden: 3 } ] },
+      { id: "n-datos", titulo: "Datos rápidos", tipo: "texto", color: "amarillo", cuerpo: "Dirección escuela: Av. Juan de Dios Bátiz s/n.\nLibros leídos 2026: 14", orden: 3, moverA: "", items: [] }
+    ];
+    function findNota(id) { return _notas.filter(function (n) { return n.id === id; })[0]; }
+    function findItem(id) { for (var i = 0; i < _notas.length; i++) { var it = _notas[i].items.filter(function (x) { return x.id === id; })[0]; if (it) return { n: _notas[i], it: it }; } return null; }
     var _temario = [["Fundamentos de UX", 8, 3], ["Investigación de usuarios", 10, 12], ["Wireframes y prototipos", 12, 22], ["Diseño visual", 10, 32], ["Proyecto final", 15, 48]].map(function (m) {
       return { camino: "DP-002", bloque: "Bloque 1", modulo: m[0], lecciones: m[1], fecha: ymd(m[2] - 14), hecho: m[2] < 8, notas: "" }; });
     var _caminos = [{ id: "CAM-MED", titulo: "Medicina", tipo: "hábito", actividad: "Medicamento", desde: ymd(-40), hasta: ymd(240), meta: "Estudio molecular", metaFecha: ymd(240), color: "#B79CC9", notas: "" }];
     function board() { return { ok: true, tasks: JSON.parse(JSON.stringify(tasks)), team: [{ nombre: "Irvin", color: "#E5E5E5" }],
       recursos: recursos.slice(), ambitos: AMBITOS_DEFAULT, horario: horario, plan: plan, calendario: calendario, fijas: fijas,
-      hechos: _hechos.slice(), cortes: _cortes.slice(), temario: JSON.parse(JSON.stringify(_temario)), caminos: _caminos.slice(), miWhatsapp: "", serverTime: stamp() }; }
+      hechos: _hechos.slice(), cortes: _cortes.slice(), temario: JSON.parse(JSON.stringify(_temario)), caminos: _caminos.slice(),
+      notas: JSON.parse(JSON.stringify(_notas)), miWhatsapp: "", serverTime: stamp() }; }
     function wait(v) { return new Promise(function (r) { setTimeout(function () { r(v); }, 150); }); }
     return {
       getBoard: function () { return wait(board()); },
@@ -1060,7 +1127,31 @@ body[data-role="editor"] .ro-note { display: none; }
       },
       deleteCorte: function (id) { _cortes = _cortes.filter(function (x) { return x.id !== id; }); return wait(board()); },
       toggleModulo: function (camino, modulo, done) { _temario.forEach(function (m) { if (m.camino === camino && m.modulo === modulo) m.hecho = !!done; }); return wait(board()); },
-      togglePagoJandy: function (no, done) { return wait(board()); }
+      togglePagoJandy: function (no, done) { return wait(board()); },
+      notaSave: function (n) {
+        if (n && n.id && findNota(n.id)) { var ex = findNota(n.id);
+          if (n.titulo != null) ex.titulo = n.titulo; if (n.cuerpo != null) ex.cuerpo = n.cuerpo;
+          if (n.color != null) ex.color = n.color; if (n.moverA != null) ex.moverA = n.moverA; if (n.tipo != null) ex.tipo = n.tipo;
+        } else { _notas.push({ id: nid("n-"), titulo: (n && n.titulo) || "", tipo: (n && n.tipo) || "texto", color: (n && n.color) || "default", cuerpo: (n && n.cuerpo) || "", orden: _notas.length + 1, moverA: (n && n.moverA) || "", items: [] }); }
+        return wait(board());
+      },
+      notaDelete: function (id) { _notas = _notas.filter(function (n) { return n.id !== id; }); return wait(board()); },
+      notaItemSave: function (it) {
+        if (it && it.id && findItem(it.id)) { var f = findItem(it.id);
+          if (it.texto != null) f.it.texto = it.texto; if (it.estado != null) f.it.estado = it.estado; if (it.notaItem != null) f.it.nota = it.notaItem;
+        } else { var n = findNota(it.nota); if (n) n.items.push({ id: nid("it-"), texto: it.texto || "", estado: it.estado || "pendiente", nota: it.notaItem || "", orden: n.items.length + 1 }); }
+        return wait(board());
+      },
+      notaItemEstado: function (id, estado) {
+        var f = findItem(id); if (f) {
+          if (estado === "hecho" && f.n.moverA && findNota(f.n.moverA)) {
+            f.n.items = f.n.items.filter(function (x) { return x.id !== id; });
+            var dest = findNota(f.n.moverA); f.it.estado = "hecho"; f.it.orden = dest.items.length + 1; dest.items.push(f.it);
+          } else { f.it.estado = estado; }
+        }
+        return wait(board());
+      },
+      notaItemDelete: function (id) { var f = findItem(id); if (f) f.n.items = f.n.items.filter(function (x) { return x.id !== id; }); return wait(board()); }
     };
   })();
 
@@ -1073,7 +1164,12 @@ body[data-role="editor"] .ro-note { display: none; }
     saveCorte: function (c) { return MODE === "demo" ? demo.saveCorte(c) : apiFetch("POST", { action: "corte", corte: c }); },
     deleteCorte: function (id) { return MODE === "demo" ? demo.deleteCorte(id) : apiFetch("POST", { action: "corteDel", id: id }); },
     toggleModulo: function (camino, modulo, done) { return MODE === "demo" ? demo.toggleModulo(camino, modulo, done) : apiFetch("POST", { action: "modulo", camino: camino, modulo: modulo, done: done }); },
-    togglePagoJandy: function (no, done) { return MODE === "demo" ? demo.togglePagoJandy(no, done) : apiFetch("POST", { action: "pagoJandy", no: no, done: done }); }
+    togglePagoJandy: function (no, done) { return MODE === "demo" ? demo.togglePagoJandy(no, done) : apiFetch("POST", { action: "pagoJandy", no: no, done: done }); },
+    notaSave: function (n) { return MODE === "demo" ? demo.notaSave(n) : apiFetch("POST", { action: "notaSave", nota: n }); },
+    notaDelete: function (id) { return MODE === "demo" ? demo.notaDelete(id) : apiFetch("POST", { action: "notaDelete", id: id }); },
+    notaItemSave: function (it) { return MODE === "demo" ? demo.notaItemSave(it) : apiFetch("POST", { action: "notaItemSave", item: it }); },
+    notaItemEstado: function (id, estado) { return MODE === "demo" ? demo.notaItemEstado(id, estado) : apiFetch("POST", { action: "notaItemEstado", id: id, estado: estado }); },
+    notaItemDelete: function (id) { return MODE === "demo" ? demo.notaItemDelete(id) : apiFetch("POST", { action: "notaItemDelete", id: id }); }
   };
 
   /* ------------ estado ------------ */
@@ -1085,7 +1181,7 @@ body[data-role="editor"] .ro-note { display: none; }
   var $ = function (id) { return document.getElementById(id); };
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   state.ambito = store("irvin.ambito") === "Personal" ? "Personal" : DP;
-  state.view = ["cal", "prog", "pomo"].indexOf(store("irvin.view")) > -1 ? store("irvin.view") : "board";
+  state.view = ["cal", "prog", "pomo", "notas"].indexOf(store("irvin.view")) > -1 ? store("irvin.view") : "board";
   state.calMode = store("irvin.calMode") || (window.innerWidth < 700 ? "day" : "week");
   if (["month", "week", "day"].indexOf(state.calMode) === -1) state.calMode = "week";
   accessCode = store("irvin.code") || "";
@@ -1128,6 +1224,7 @@ body[data-role="editor"] .ro-note { display: none; }
     state.miWhatsapp = res.miWhatsapp || "";
     state.role = res.role === "reader" ? "reader" : "editor";
     document.body.setAttribute("data-role", state.role);
+    state.notas = Array.isArray(res.notas) ? res.notas : [];
     setSync("", (MODE === "live" ? "Sincronizado · " : "Modo demo · ") + (res.serverTime || "").slice(11));
     render();
   }
@@ -1225,11 +1322,12 @@ body[data-role="editor"] .ro-note { display: none; }
     $("calView").hidden = state.view !== "cal";
     $("progView").hidden = state.view !== "prog";
     $("pomoView").hidden = state.view !== "pomo";
+    $("notasView").hidden = state.view !== "notas";
     $("scopeSwitch").hidden = state.view !== "board";
     $("progress").hidden = state.view !== "board";
     Array.prototype.forEach.call($("viewSwitch").querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === state.view)); });
     $("t_responsable").innerHTML = state.team.map(function (p) { return "<option>" + esc(p.nombre) + "</option>"; }).join("");
-    if (state.view === "board") { renderFilters(); renderBoard(); } else if (state.view === "prog") renderProg(); else if (state.view === "pomo") renderPomo(); else renderCal();
+    if (state.view === "board") { renderFilters(); renderBoard(); } else if (state.view === "prog") renderProg(); else if (state.view === "pomo") renderPomo(); else if (state.view === "notas") renderNotas(); else renderCal();
   }
 
   function renderHeader() {
@@ -2767,6 +2865,96 @@ body[data-role="editor"] .ro-note { display: none; }
     ev.preventDefault(); lane.classList.remove("over");
     move(ev.dataTransfer.getData("text/plain"), lane.dataset.estado);
   });
+  /* =============================== NOTAS (tipo Keep) =============================== */
+  var notasFocus = null; // id de nota cuyo input "+ elemento" re-enfocar tras recargar
+
+  function byNota(id) { return (state.notas || []).filter(function (n) { return n.id === id; })[0]; }
+  function itemEnEstado(itemId) {
+    for (var i = 0; i < (state.notas || []).length; i++) {
+      var it = state.notas[i].items.filter(function (x) { return x.id === itemId; })[0]; if (it) return it;
+    }
+    return null;
+  }
+  function colorSwatch(c) {
+    return { "default": "var(--bg-surface)", rojo: "#b25b5b", naranja: "#c08a4a", amarillo: "#c9b84a", verde: "#5aa06e", azul: "#5a84c0", morado: "#8a6fb0", rosa: "#c06f9a", gris: "#8b9099" }[c] || "var(--bg-surface)";
+  }
+  function notaItemsOrdenados(n) {
+    var rank = { en_curso: 0, pendiente: 1, hecho: 2 };
+    return n.items.slice().sort(function (a, b) { return ((rank[a.estado] || 1) - (rank[b.estado] || 1)) || (a.orden - b.orden); });
+  }
+  function notaHTML(n) {
+    var ro = state.role !== "editor";
+    var head = '<div class="nota-head">' +
+      '<input class="nota-title" value="' + esc(n.titulo) + '" placeholder="Título"' + (ro ? ' readonly' : '') + '>' +
+      (ro ? '' : '<div class="nota-tools"><button class="nota-color" type="button" title="Color" aria-label="Color">🎨</button>' +
+        '<button class="nota-del" type="button" title="Borrar nota" aria-label="Borrar nota">🗑</button></div>') + '</div>';
+    var dest = n.moverA ? byNota(n.moverA) : null;
+    var mig = dest ? '<p class="nota-mig">Al marcar como hecho → pasa a “' + esc(dest.titulo) + '”.</p>' : '';
+    var body;
+    if (n.tipo === "checklist") {
+      var items = notaItemsOrdenados(n).map(function (it) {
+        return '<li class="nota-item estado-' + esc(it.estado) + '" data-item="' + esc(it.id) + '">' +
+          '<button class="chk" type="button" aria-label="Marcar hecho">' + (it.estado === "hecho" ? "✓" : "") + '</button>' +
+          (ro ? '' : '<button class="curso" type="button" title="En curso" aria-label="En curso">▶</button>') +
+          '<input class="it-text" value="' + esc(it.texto) + '"' + (ro ? ' readonly' : '') + '>' +
+          (it.nota ? '<span class="it-note">' + esc(it.nota) + '</span>' : '') +
+          (ro ? '' : '<button class="it-del" type="button" aria-label="Quitar">×</button>') + '</li>';
+      }).join("");
+      body = '<ul class="nota-items">' + items + '</ul>' +
+        (ro ? '' : '<div class="nota-additem"><input class="it-new" data-nota="' + esc(n.id) + '" placeholder="+ elemento"></div>');
+    } else {
+      body = '<textarea class="nota-body" placeholder="Nota…"' + (ro ? ' readonly' : '') + '>' + esc(n.cuerpo) + '</textarea>';
+    }
+    var palette = ro ? '' : '<div class="nota-palette" hidden>' +
+      ["default", "rojo", "naranja", "amarillo", "verde", "azul", "morado", "rosa", "gris"].map(function (c) {
+        return '<button type="button" data-color="' + c + '" aria-pressed="' + (n.color === c) + '" style="background:' + colorSwatch(c) + '" aria-label="' + c + '"></button>';
+      }).join("") + '</div>';
+    return '<article class="nota" data-nota="' + esc(n.id) + '" data-color="' + esc(n.color || "default") + '">' + head + mig + body + palette + '</article>';
+  }
+  function renderNotas() {
+    var grid = $("notasGrid"); if (!grid) return;
+    var notas = (state.notas || []).slice().sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+    $("notasVacio").hidden = notas.length > 0;
+    grid.innerHTML = notas.map(notaHTML).join("");
+    if (notasFocus) { var inp = grid.querySelector('.it-new[data-nota="' + notasFocus + '"]'); notasFocus = null; if (inp) inp.focus(); }
+  }
+  function notaSaveField(id, field, val) {
+    var n = byNota(id); if (!n || n[field] === val) return;
+    var patch = { id: id }; patch[field] = val; run(api.notaSave(patch), "");
+  }
+  $("btnNotaTexto").addEventListener("click", function () { if (!requireEditor()) return; run(api.notaSave({ tipo: "texto", titulo: "", color: "default" }), ""); });
+  $("btnNotaCheck").addEventListener("click", function () { if (!requireEditor()) return; run(api.notaSave({ tipo: "checklist", titulo: "", color: "default" }), ""); });
+  (function () {
+    var grid = $("notasGrid"); if (!grid) return;
+    grid.addEventListener("click", function (ev) {
+      var art = ev.target.closest(".nota"); if (!art) return; var id = art.dataset.nota;
+      if (ev.target.closest(".nota-color")) { var pal = art.querySelector(".nota-palette"); if (pal) pal.hidden = !pal.hidden; return; }
+      var sw = ev.target.closest(".nota-palette button");
+      if (sw) { if (!requireEditor()) return; run(api.notaSave({ id: id, color: sw.dataset.color }), ""); return; }
+      if (ev.target.closest(".nota-del")) { if (!requireEditor()) return; if (confirm("¿Borrar esta nota?")) run(api.notaDelete(id), "Nota borrada"); return; }
+      var li = ev.target.closest(".nota-item"); if (!li) return; var iid = li.dataset.item;
+      if (ev.target.closest(".chk")) { if (!requireEditor()) return; var it = itemEnEstado(iid); run(api.notaItemEstado(iid, it && it.estado === "hecho" ? "pendiente" : "hecho"), ""); return; }
+      if (ev.target.closest(".curso")) { if (!requireEditor()) return; var it2 = itemEnEstado(iid); run(api.notaItemEstado(iid, it2 && it2.estado === "en_curso" ? "pendiente" : "en_curso"), ""); return; }
+      if (ev.target.closest(".it-del")) { if (!requireEditor()) return; run(api.notaItemDelete(iid), ""); return; }
+    });
+    grid.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Enter") return;
+      if (ev.target.classList.contains("it-new")) {
+        ev.preventDefault(); var val = ev.target.value.trim(); if (!val) return; if (!requireEditor()) return;
+        notasFocus = ev.target.dataset.nota; ev.target.value = ""; run(api.notaItemSave({ nota: notasFocus, texto: val }), "");
+      } else if (ev.target.classList.contains("nota-title") || ev.target.classList.contains("it-text")) { ev.preventDefault(); ev.target.blur(); }
+    });
+    grid.addEventListener("focusout", function (ev) {
+      if (state.role !== "editor") return; var art = ev.target.closest(".nota"); if (!art) return;
+      if (ev.target.classList.contains("nota-title")) notaSaveField(art.dataset.nota, "titulo", ev.target.value);
+      else if (ev.target.classList.contains("nota-body")) notaSaveField(art.dataset.nota, "cuerpo", ev.target.value);
+      else if (ev.target.classList.contains("it-text")) {
+        var li = ev.target.closest(".nota-item"); var it = itemEnEstado(li.dataset.item);
+        if (it && it.texto !== ev.target.value) run(api.notaItemSave({ id: li.dataset.item, nota: art.dataset.nota, texto: ev.target.value }), "");
+      }
+    });
+  })();
+
   $("btnNew").addEventListener("click", function () { if (!requireEditor()) return; openForm(null); });
   $("btnNew2").addEventListener("click", function () {
     if (!requireEditor()) return;

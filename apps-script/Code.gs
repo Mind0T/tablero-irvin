@@ -122,6 +122,8 @@ function crearHoja() {
   ensureSheet_(ss, SHEET_CORTES, CORTES_HEADERS);
   ensureSheet_(ss, SHEET_CAMINOS, ['ID', 'Título', 'Tipo', 'Actividad (Fijas)', 'Desde', 'Hasta', 'Meta', 'Meta fecha', 'Color', 'Notas']);
   ensureSheet_(ss, SHEET_TEMARIO, ['Camino', 'Bloque', 'Módulo', 'Lecciones', 'Fecha meta', 'Hecho', 'Notas']);
+  ensureSheet_(ss, SHEET_NOTAS, NOTAS_HEADERS);
+  ensureSheet_(ss, SHEET_NOTA_ITEMS, NOTA_ITEMS_HEADERS);
 
   // Menús desplegables en la hoja (por si editas directo ahí)
   const cols = colMap_(tareas);
@@ -176,7 +178,7 @@ function doPost(e) {
       case 'corteDel': return deleteCorte_(body.id);
       case 'modulo': return toggleModulo_(body.camino, body.modulo, body.done);
       case 'pagoJandy': return togglePagoJandy_(body.no, body.done);
-      default: throw new Error('Acción no válida: ' + body.action);
+      default: return notasAccion_(body); // notaSave, notaItemEstado, etc. (ver Notas.gs)
     }
   }));
 }
@@ -192,7 +194,7 @@ function getBoard_() {
            horario: optional_(getHorario_), plan: plan, calendario: optional_(getCalendarioIPN_),
            fijas: optional_(getFijas_), hechos: hechos,
            cortes: optional_(getCortes_), caminos: optional_(getCaminos_), temario: optional_(getTemario_),
-           pagosJandy: optional_(getPagosJandy_),
+           pagosJandy: optional_(getPagosJandy_), notas: optional_(getNotas_),
            estados: ESTADOS, prioridades: PRIORIDADES, miWhatsapp: myPhone_(), serverTime: now_() };
 }
 

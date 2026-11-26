@@ -14,7 +14,11 @@
 
 import crypto from "node:crypto";
 
-const ACTIONS = new Set(["save", "move", "delete", "hecho", "corte", "corteDel", "modulo", "pagoJandy"]);
+const ACTIONS = new Set([
+  "save", "move", "delete", "hecho", "corte", "corteDel", "modulo", "pagoJandy",
+  // Notas (vista tipo Keep)
+  "notaSave", "notaDelete", "notaOrden", "notaItemSave", "notaItemEstado", "notaItemDelete", "notaItemOrden",
+]);
 
 // Tipos de "Fijas" (calendario) que se consideran personales y se ocultan al lector.
 const PERSONAL_FIJA_TIPOS = (process.env.PERSONAL_FIJA_TIPOS || "Medicamento,Salud,Cita,Médico,Medico")
@@ -110,6 +114,7 @@ export default async function handler(req, res) {
         corte: body.corte,                                                   // corte con evidencia (nota, link, imagen)
         camino: body.camino, modulo: body.modulo,                            // modulo del temario
         no: body.no,                                                          // número de pago (Pagos Jandy)
+        nota: body.nota, item: body.item, ids: body.ids,                     // notas (vista tipo Keep)
       };
       upstream = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
