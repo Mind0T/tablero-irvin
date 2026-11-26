@@ -429,6 +429,20 @@ details.mats > summary:hover { background: var(--bg-surface); }
 .gate h2 { margin: 0; font: 800 22px/1.1 var(--font-display); color: var(--text-primary); }
 .gate p { margin: 0; font-size: 13px; }
 .gate .err { color: var(--color-error); font-size: 12px; min-height: 1em; }
+
+/* ---- modo lector / editor ---- */
+body[data-role="reader"] #btnNew, body[data-role="reader"] #btnNew2 { display: none; }
+body[data-role="reader"] .card .moves { display: none; }
+.card.locked { cursor: pointer; border-style: dashed; }
+.card.locked .lockline { filter: blur(5px); user-select: none; color: var(--text-muted); }
+.card.locked:hover { border-color: var(--scope, #CDB08A); }
+.pill.lockpill { background: color-mix(in oklab, var(--scope, #CDB08A) 22%, transparent); color: var(--text-secondary); }
+.ev.locked .lockline, .rnode.locked .lockline { filter: blur(4px); user-select: none; }
+.ev.locked { cursor: pointer; }
+dialog.ro .mats-add, dialog.ro #btnSave, dialog.ro #btnDelete, dialog.ro #btnRecursos, dialog.ro #btnAddMat { display: none !important; }
+dialog.ro input, dialog.ro select, dialog.ro textarea { pointer-events: none; opacity: .8; }
+.ro-note { font-size: 12px; color: var(--text-muted); margin: -2px 0 8px; }
+body[data-role="editor"] .ro-note { display: none; }
 .gate .row { display: flex; gap: 8px; width: 100%; }
 .gate .row input { flex: 1; min-width: 0; }
 
@@ -741,6 +755,16 @@ details.mats > summary:hover { background: var(--bg-surface); }
   <div class="err" id="gateErr" role="alert"></div>
 </form>
 
+<dialog id="dlgUnlock">
+  <form id="frmUnlock" method="dialog">
+    <h2>Contraseña de editor</h2>
+    <p style="margin:0;font-size:13px;color:var(--text-muted);">Para ver y editar las actividades personales necesitas la contraseña de editor.</p>
+    <div class="f"><input id="unlockCode" type="password" autocomplete="off" aria-label="Contraseña de editor" placeholder="Contraseña de editor" required></div>
+    <div class="err" id="unlockErr" role="alert" style="color:var(--color-error);font-size:12px;min-height:1em;"></div>
+    <div class="dlg-actions"><button class="btn ghost" type="button" id="unlockCancel">Cancelar</button><div class="right"><button class="btn primary" type="submit">Desbloquear</button></div></div>
+  </form>
+</dialog>
+
 <dialog id="dlgRecursos">
   <form method="dialog">
     <h2 id="resTitle">Recursos</h2>
@@ -902,7 +926,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
       return r.json().catch(function () { return null; }).then(function (data) {
         if (!r.ok || !data || data.ok === false) {
           var err = new Error((data && data.error) || ("El servidor respondió " + r.status + "."));
-          err.status = r.status; throw err;
+          err.status = r.status; err.needEditor = !!(data && data.needEditor); throw err;
         }
         return data;
       });
@@ -1056,6 +1080,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   var state = { tasks: [], team: [], recursos: [], horario: [], plan: [], calendario: [], fijas: [], hechos: [], hechosSet: {}, cortes: [], caminos: [], temario: [],
                 ambitos: AMBITOS_DEFAULT, miWhatsapp: "",
                 ambito: DP, f: { cat: "", tipo: "", inst: "", prio: "" }, q: "", openPop: "",
+                role: "editor",
                 view: "board", calMode: "week", calDate: today0(), busy: 0, dragging: false };
   var $ = function (id) { return document.getElementById(id); };
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
@@ -1101,6 +1126,8 @@ details.mats > summary:hover { background: var(--bg-surface); }
     state.sinCaminos = MODE === "live" && res.caminos === undefined;
     state.temario = res.temario || [];
     state.miWhatsapp = res.miWhatsapp || "";
+    state.role = res.role === "reader" ? "reader" : "editor";
+    document.body.setAttribute("data-role", state.role);
     setSync("", (MODE === "live" ? "Sincronizado · " : "Modo demo · ") + (res.serverTime || "").slice(11));
     render();
   }
@@ -1109,6 +1136,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     return promise.then(function (res) { apply(res); if (okMsg) toast(okMsg); return true; })
       .catch(function (err) {
         if (err.status === 401) { showGate("Tu código ya no es válido. Escríbelo de nuevo."); return false; }
+        if (err.needEditor) { setSync("", ""); openUnlock(); return load().then(function () { return false; }); }
         setSync("error", "No se pudo guardar"); toast(err.message + " Recargando."); return load().then(function () { return false; });
       })
       .then(function (ok) { state.busy--; return ok; });
@@ -1138,6 +1166,32 @@ details.mats > summary:hover { background: var(--bg-surface); }
     ev.preventDefault();
     accessCode = $("gateCode").value.trim(); store("irvin.code", accessCode);
     $("gateErr").textContent = "Verificando…"; load();
+  });
+
+  /* ------------ desbloqueo de editor ------------ */
+  var dlgUnlock = $("dlgUnlock");
+  function openUnlock() {
+    if (state.role === "editor") return;
+    $("unlockErr").textContent = ""; $("unlockCode").value = "";
+    if (!dlgUnlock.open && dlgUnlock.showModal) dlgUnlock.showModal();
+    setTimeout(function () { $("unlockCode").focus(); }, 30);
+  }
+  // Devuelve true si ya es editor; si no, abre el desbloqueo y devuelve false.
+  function requireEditor() { if (state.role === "editor") return true; openUnlock(); return false; }
+  $("unlockCancel").addEventListener("click", function () { dlgUnlock.close(); });
+  $("frmUnlock").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var code = $("unlockCode").value.trim(); if (!code) return;
+    var prev = accessCode;
+    $("unlockErr").textContent = "Verificando…"; accessCode = code;
+    api.getBoard().then(function (res) {
+      if (res && res.role === "editor") {
+        store("irvin.code", code); dlgUnlock.close(); if (dlg.open) dlg.close(); apply(res); toast("Modo editor habilitado.");
+      } else { accessCode = prev; $("unlockErr").textContent = "Esa no es la contraseña de editor."; }
+    }).catch(function (err) {
+      accessCode = prev;
+      $("unlockErr").textContent = (err && err.status === 401) ? "Contraseña incorrecta." : "No se pudo verificar. Intenta de nuevo.";
+    });
   });
 
   /* ------------ render general ------------ */
@@ -1420,7 +1474,14 @@ details.mats > summary:hover { background: var(--bg-surface); }
     if (t.hora) txt += " · " + t.hora;
     return '<span class="due ' + cls + '" title="Fecha límite">' + esc(txt) + "</span>";
   }
+  function lockedCardHTML(t) {
+    return '<article class="card locked" tabindex="0" data-id="' + esc(t.id) + '" data-estado="' + esc(t.estado) + '" aria-label="Actividad personal bloqueada">' +
+      '<div class="card-top"><span class="tid">' + esc(t.id) + '</span><span class="pill lockpill">🔒 Personal</span></div>' +
+      '<h3 class="lockline">Actividad personal</h3>' +
+      '<p class="desc lockline">Toca para desbloquear con la contraseña de editor.</p></article>';
+  }
   function cardHTML(t) {
+    if (t.locked) return lockedCardHTML(t);
     var idx = ESTADOS.indexOf(t.estado), moves = "";
     if (idx > 0) moves += '<button type="button" data-move="' + ESTADOS[idx - 1] + '">← ' + ESTADO_LABEL[ESTADOS[idx - 1]] + "</button>";
     if (idx < 2) moves += '<button type="button" data-move="' + ESTADOS[idx + 1] + '">' + ESTADO_LABEL[ESTADOS[idx + 1]] + " →</button>";
@@ -1485,6 +1546,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     }).join("");
   }
   function move(id, estado) {
+    if (!requireEditor()) return;
     var t = taskById(id);
     if (!t || t.estado === estado) return;
     t.estado = estado; render();
@@ -1551,8 +1613,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
       if (!fijaToday(f, ymd, dow)) return;
       if (/^clase$/i.test(f.tipo) && !classes) return;
       var c = fijaColor(f.tipo), s = mins(f.inicio), e = mins(f.fin), cv = claveFija(f);
-      var item = { title: f.actividad, tipo: f.tipo || "Rutina", info: f, b: c[0], g: c[1], clave: cv, done: hecho(cv, ymd) };
-      if (s == null) allDay.push(Object.assign(item, { kind: "fixed", title: (/pago/i.test(f.tipo) ? "$ " : "") + f.actividad }));
+      var fTit = f.locked ? "🔒 Personal" : f.actividad;
+      var item = { title: fTit, tipo: f.tipo || "Rutina", info: f, b: c[0], g: c[1], clave: cv, done: hecho(cv, ymd), locked: !!f.locked };
+      if (s == null) allDay.push(Object.assign(item, { kind: "fixed", title: f.locked ? "🔒 Personal" : ((/pago/i.test(f.tipo) ? "$ " : "") + f.actividad) }));
       else if (e == null || e <= s) marks.push(Object.assign(item, { kind: "mark", s: s, cls: /comida/i.test(f.tipo) ? "" : /medic/i.test(f.tipo) ? "med" : "rut" }));
       else timed.push(Object.assign(item, { kind: "fixed" + (/traslado/i.test(f.tipo) ? " traslado" : ""), sub: f.inicio + "–" + f.fin + (f.lugar ? " · " + f.lugar : ""), s: s, e: e }));
     });
@@ -1568,11 +1631,11 @@ details.mats > summary:hover { background: var(--bg-surface); }
     state.tasks.forEach(function (t) {
       var c = PRIO_COLORS[t.prioridad || "Normal"] || PRIO_COLORS.Normal;
       if (t.fecha === ymd) {
-        var label = (t.tipo ? t.tipo + ": " : "") + t.titulo;
-        if (mins(t.hora) != null) timed.push({ kind: "task", title: label, sub: t.hora + (t.categoria ? " · " + t.categoria : ""), s: mins(t.hora), e: mins(t.hora) + 60, id: t.id, b: c[0], g: c[1], done: t.estado === "Done" });
-        else allDay.push({ kind: "task", title: "⚑ " + label, id: t.id, b: c[0], g: c[1], done: t.estado === "Done" });
+        var label = t.locked ? "🔒 Personal" : ((t.tipo ? t.tipo + ": " : "") + t.titulo);
+        if (mins(t.hora) != null) timed.push({ kind: "task", title: label, sub: t.locked ? "" : (t.hora + (t.categoria ? " · " + t.categoria : "")), s: mins(t.hora), e: mins(t.hora) + 60, id: t.id, b: c[0], g: c[1], done: t.estado === "Done", locked: !!t.locked });
+        else allDay.push({ kind: "task", title: t.locked ? "🔒 Personal" : ("⚑ " + label), id: t.id, b: c[0], g: c[1], done: t.estado === "Done", locked: !!t.locked });
       } else if (t.inicio === ymd && t.estado !== "Done") {
-        allDay.push({ kind: "task", title: "▶ Empieza: " + t.titulo, id: t.id, b: c[0], g: "var(--bg-surface-2)" });
+        allDay.push({ kind: "task", title: t.locked ? "🔒 Personal" : ("▶ Empieza: " + t.titulo), id: t.id, b: c[0], g: "var(--bg-surface-2)", locked: !!t.locked });
       }
     });
     var rank = { ipn: 0, fixed: 1, task: 2 };
@@ -2091,6 +2154,8 @@ details.mats > summary:hover { background: var(--bg-surface); }
 
   var dlg = $("dlg"), dlgRecursos = $("dlgRecursos");
   function openForm(task, preset) {
+    // Lector: lo personal (bloqueado) y crear algo nuevo piden la contraseña de editor.
+    if ((task && task.locked) || (!task && state.role !== "editor")) { openUnlock(); return; }
     var amb = task ? task.ambito : state.ambito;
     var t = task || Object.assign({ ambito: amb, estado: "To Do", prioridad: state.f.prio || "Normal", responsable: me(),
                       categoria: state.f.cat, tipo: state.f.tipo, instituciones: state.f.inst }, preset || {});
@@ -2111,6 +2176,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
     renderMatView(); renderQuick(); renderDetSummary();
     $("t_stamp").textContent = task ? "Creada: " + (task.creado || "—") + " · Última edición: " + (task.actualizado || "—") : "";
     $("btnDelete").hidden = !task; disarm();
+    dlg.classList.toggle("ro", state.role !== "editor"); // lector: formulario en solo-lectura
     dlg.showModal();
     dlg.scrollTop = 0; if (!task) $("t_titulo").focus();
   }
@@ -2148,6 +2214,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
 
   $("frm").addEventListener("submit", function (ev) {
     ev.preventDefault();
+    if (!requireEditor()) return;
     var bad = currentMats().filter(function (m) { return m.url && !isUrl(m.url); })[0];
     if (bad) { toast("Revisa el link «" + bad.url.slice(0, 40) + "»: debe empezar con https://"); return; }
     var t = formTask();
@@ -2167,6 +2234,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   $("btnCancel").addEventListener("click", function () { dlg.close(); });
   $("btnDelete").addEventListener("click", function () {
     var b = this;
+    if (!requireEditor()) return;
     if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "¿Seguro? Borrar"; return; }
     var id = $("t_id").value; dlg.close();
     state.tasks = state.tasks.filter(function (x) { return x.id !== id; }); render();
@@ -2680,6 +2748,7 @@ details.mats > summary:hover { background: var(--bg-surface); }
   });
   board.addEventListener("dragstart", function (ev) {
     var card = ev.target.closest(".card"); if (!card) return;
+    if (state.role !== "editor") { ev.preventDefault(); openUnlock(); return; }
     state.dragging = true; card.classList.add("dragging");
     ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", card.dataset.id);
   });
@@ -2698,8 +2767,9 @@ details.mats > summary:hover { background: var(--bg-surface); }
     ev.preventDefault(); lane.classList.remove("over");
     move(ev.dataTransfer.getData("text/plain"), lane.dataset.estado);
   });
-  $("btnNew").addEventListener("click", function () { openForm(null); });
+  $("btnNew").addEventListener("click", function () { if (!requireEditor()) return; openForm(null); });
   $("btnNew2").addEventListener("click", function () {
+    if (!requireEditor()) return;
     openForm(null, state.calMode === "day" ? { fecha: ymdOf(state.calDate) } : null);
   });
   $("btnRefresh").addEventListener("click", load);
