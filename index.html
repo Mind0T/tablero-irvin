@@ -485,6 +485,10 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
 .nota-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .nota-palette button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
 .nota-palette button[aria-pressed="true"] { border-color: var(--text-primary); }
+.nota-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nota-link { display: inline-flex; align-items: center; max-width: 100%; padding: 4px 10px; border: 1px solid var(--border-default); border-radius: 999px; background: rgba(255,255,255,.04); color: var(--text-secondary); font-size: 12px; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nota-link::before { content: "🔗"; font-size: 10px; margin-right: 5px; opacity: .7; }
+.nota-link:hover { background: rgba(255,255,255,.1); color: var(--text-primary); border-color: var(--text-muted); }
 @media (max-width: 520px) { .notas-grid { columns: 1; } }
 .gate .row { display: flex; gap: 8px; width: 100%; }
 .gate .row input { flex: 1; min-width: 0; }
@@ -2878,6 +2882,27 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
   function colorSwatch(c) {
     return { "default": "var(--bg-surface)", rojo: "#b25b5b", naranja: "#c08a4a", amarillo: "#c9b84a", verde: "#5aa06e", azul: "#5a84c0", morado: "#8a6fb0", rosa: "#c06f9a", gris: "#8b9099" }[c] || "var(--bg-surface)";
   }
+  function linkLabel(u) { var m = String(u).match(/^https?:\/\/(?:www\.)?([^\/?#]+)/i); return m ? m[1] : String(u); }
+  function notaLinksHTML(cuerpo) {
+    var urls = (String(cuerpo || "").match(/https?:\/\/[^\s]+/g) || []);
+    if (!urls.length) return "";
+    return '<div class="nota-links">' + urls.map(function (u) {
+      return '<a class="nota-link" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" title="' + esc(u) + '">' + esc(linkLabel(u)) + '</a>';
+    }).join("") + '</div>';
+  }
+  // Construye el patch completo de una nota (tipo/color/título/cuerpo/moverA) para no
+  // perder campos: el backend reinicia a 'default'/'texto' lo que no reciba.
+  function notaFull(id, patch) {
+    var n = byNota(id) || {};
+    var f = { id: id, tipo: n.tipo, titulo: n.titulo, color: n.color, cuerpo: n.cuerpo, moverA: n.moverA };
+    for (var k in patch) if (Object.prototype.hasOwnProperty.call(patch, k)) f[k] = patch[k];
+    return f;
+  }
+  // ¿El foco está dentro de una nota que se está editando? (para no refrescar encima)
+  function notaEditando() {
+    var el = document.activeElement;
+    return !!(el && el.closest && el.closest("#notasGrid") && (el.tagName === "INPUT" || el.tagName === "TEXTAREA"));
+  }
   function notaItemsOrdenados(n) {
     var rank = { en_curso: 0, pendiente: 1, hecho: 2 };
     return n.items.slice().sort(function (a, b) { return ((rank[a.estado] || 1) - (rank[b.estado] || 1)) || (a.orden - b.orden); });
@@ -2903,7 +2928,13 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
       body = '<ul class="nota-items">' + items + '</ul>' +
         (ro ? '' : '<div class="nota-additem"><input class="it-new" data-nota="' + esc(n.id) + '" placeholder="+ elemento"></div>');
     } else {
-      body = '<textarea class="nota-body" placeholder="Nota…"' + (ro ? ' readonly' : '') + '>' + esc(n.cuerpo) + '</textarea>';
+      var linksHTML = notaLinksHTML(n.cuerpo);
+      var soloLinks = linksHTML && !String(n.cuerpo || "").replace(/https?:\/\/[^\s]+/g, "").trim();
+      if (ro && soloLinks) {
+        body = linksHTML; // nota de solo-enlaces en modo lector: muestra solo los chips clicables
+      } else {
+        body = '<textarea class="nota-body" placeholder="Nota…"' + (ro ? ' readonly' : '') + '>' + esc(n.cuerpo) + '</textarea>' + linksHTML;
+      }
     }
     var palette = ro ? '' : '<div class="nota-palette" hidden>' +
       ["default", "rojo", "naranja", "amarillo", "verde", "azul", "morado", "rosa", "gris"].map(function (c) {
@@ -2920,7 +2951,7 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
   }
   function notaSaveField(id, field, val) {
     var n = byNota(id); if (!n || n[field] === val) return;
-    var patch = { id: id }; patch[field] = val; run(api.notaSave(patch), "");
+    var patch = {}; patch[field] = val; run(api.notaSave(notaFull(id, patch)), "");
   }
   $("btnNotaTexto").addEventListener("click", function () { if (!requireEditor()) return; run(api.notaSave({ tipo: "texto", titulo: "", color: "default" }), ""); });
   $("btnNotaCheck").addEventListener("click", function () { if (!requireEditor()) return; run(api.notaSave({ tipo: "checklist", titulo: "", color: "default" }), ""); });
@@ -2930,7 +2961,7 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
       var art = ev.target.closest(".nota"); if (!art) return; var id = art.dataset.nota;
       if (ev.target.closest(".nota-color")) { var pal = art.querySelector(".nota-palette"); if (pal) pal.hidden = !pal.hidden; return; }
       var sw = ev.target.closest(".nota-palette button");
-      if (sw) { if (!requireEditor()) return; run(api.notaSave({ id: id, color: sw.dataset.color }), ""); return; }
+      if (sw) { if (!requireEditor()) return; run(api.notaSave(notaFull(id, { color: sw.dataset.color })), ""); return; }
       if (ev.target.closest(".nota-del")) { if (!requireEditor()) return; if (confirm("¿Borrar esta nota?")) run(api.notaDelete(id), "Nota borrada"); return; }
       var li = ev.target.closest(".nota-item"); if (!li) return; var iid = li.dataset.item;
       if (ev.target.closest(".chk")) { if (!requireEditor()) return; var it = itemEnEstado(iid); run(api.notaItemEstado(iid, it && it.estado === "hecho" ? "pendiente" : "hecho"), ""); return; }
@@ -2967,11 +2998,11 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
   load();
   setInterval(function () {
     if (MODE !== "live" || !loadedOnce || !$("gate").hidden) return;
-    if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop && document.visibilityState === "visible") load();
+    if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop && !notaEditando() && document.visibilityState === "visible") load();
   }, REFRESH_MS);
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState !== "visible" || MODE !== "live" || !loadedOnce || !$("gate").hidden) return;
-    if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop) load();
+    if (!dlg.open && !dlgRecursos.open && !$("dlgFija").open && !state.dragging && !state.busy && !state.openPop && !notaEditando()) load();
   });
 })();
 </script>
