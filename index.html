@@ -487,6 +487,21 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
 .it-del:hover { color: #E06B6B; }
 .nota-additem { margin-top: 6px; }
 .it-new { width: 100%; background: transparent; border: 0; border-top: 1px dashed var(--border-default); color: var(--text-secondary); font-size: 13.5px; padding: 6px 0 2px; }
+/* asa para reordenar ítems del checklist */
+.it-drag { width: 16px; height: 22px; flex-shrink: 0; display: grid; place-items: center; background: transparent; border: 0; cursor: grab; color: var(--text-muted); opacity: .5; touch-action: none; padding: 0; }
+.it-drag:hover { opacity: 1; color: var(--text-secondary); }
+.it-drag:active { cursor: grabbing; }
+.it-drag svg { fill: currentColor; }
+.nota-item.dragging { opacity: .5; background: rgba(255,255,255,.05); border-radius: 6px; }
+/* alto ajustable + colapsar (tipo Keep) */
+.nota-content { overflow: hidden; }
+.nota.clamped .nota-content { -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); }
+.nota-more { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 3px 10px; border: 1px solid var(--border-default); border-radius: 999px; background: rgba(255,255,255,.04); color: var(--text-secondary); font: 600 11.5px var(--font-display); cursor: pointer; }
+.nota-more:hover { background: rgba(255,255,255,.1); color: var(--text-primary); border-color: var(--text-muted); }
+.nota-rz { height: 16px; margin: 4px -12px -6px; display: grid; place-items: center; cursor: ns-resize; touch-action: none; }
+.nota-rz span { width: 34px; height: 4px; border-radius: 99px; background: var(--border-strong); transition: background .15s, width .15s; }
+.nota-rz:hover span, .nota.resizing .nota-rz span { background: var(--text-muted); width: 46px; }
+body[data-role="reader"] .nota-rz, body[data-role="reader"] .it-drag { display: none; }
 .nota-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .nota-palette button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
 .nota-palette button[aria-pressed="true"] { border-color: var(--text-primary); }
@@ -1171,7 +1186,13 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
         }
         return wait(board());
       },
-      notaItemDelete: function (id) { var f = findItem(id); if (f) f.n.items = f.n.items.filter(function (x) { return x.id !== id; }); return wait(board()); }
+      notaItemDelete: function (id) { var f = findItem(id); if (f) f.n.items = f.n.items.filter(function (x) { return x.id !== id; }); return wait(board()); },
+      notaItemOrden: function (ids) {
+        for (var i = 0; i < _notas.length; i++) { var n = _notas[i];
+          if (n.items.some(function (x) { return ids.indexOf(x.id) > -1; })) {
+            n.items.forEach(function (it) { var k = ids.indexOf(it.id); if (k > -1) it.orden = k + 1; }); break; } }
+        return wait(board());
+      }
     };
   })();
 
@@ -1190,7 +1211,8 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
     notaOrden: function (ids) { return MODE === "demo" ? demo.notaOrden(ids) : apiFetch("POST", { action: "notaOrden", ids: ids }); },
     notaItemSave: function (it) { return MODE === "demo" ? demo.notaItemSave(it) : apiFetch("POST", { action: "notaItemSave", item: it }); },
     notaItemEstado: function (id, estado) { return MODE === "demo" ? demo.notaItemEstado(id, estado) : apiFetch("POST", { action: "notaItemEstado", id: id, estado: estado }); },
-    notaItemDelete: function (id) { return MODE === "demo" ? demo.notaItemDelete(id) : apiFetch("POST", { action: "notaItemDelete", id: id }); }
+    notaItemDelete: function (id) { return MODE === "demo" ? demo.notaItemDelete(id) : apiFetch("POST", { action: "notaItemDelete", id: id }); },
+    notaItemOrden: function (ids) { return MODE === "demo" ? demo.notaItemOrden(ids) : apiFetch("POST", { action: "notaItemOrden", ids: ids }); }
   };
 
   /* ------------ estado ------------ */
@@ -2946,18 +2968,20 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
         '<button class="nota-del" type="button" title="Borrar nota" aria-label="Borrar nota">🗑</button></div>') + '</div>';
     var dest = n.moverA ? byNota(n.moverA) : null;
     var mig = dest ? '<p class="nota-mig">Al marcar como hecho → pasa a “' + esc(dest.titulo) + '”.</p>' : '';
-    var body;
+    var dragGrip = '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="6" cy="4" r="1.2"/><circle cx="10" cy="4" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="10" cy="12" r="1.2"/></svg>';
+    var body, additem = "";
     if (n.tipo === "checklist") {
       var items = notaItemsOrdenados(n).map(function (it) {
         return '<li class="nota-item estado-' + esc(it.estado) + '" data-item="' + esc(it.id) + '">' +
+          (ro ? '' : '<button class="it-drag" type="button" title="Arrastrar para reordenar" aria-label="Arrastrar ítem">' + dragGrip + '</button>') +
           '<button class="chk" type="button" aria-label="Marcar hecho">' + (it.estado === "hecho" ? "✓" : "") + '</button>' +
           (ro ? '' : '<button class="curso" type="button" title="En curso" aria-label="En curso">▶</button>') +
           '<input class="it-text" value="' + esc(it.texto) + '"' + (ro ? ' readonly' : '') + '>' +
           (it.nota ? '<span class="it-note">' + esc(it.nota) + '</span>' : '') +
           (ro ? '' : '<button class="it-del" type="button" aria-label="Quitar">×</button>') + '</li>';
       }).join("");
-      body = '<ul class="nota-items">' + items + '</ul>' +
-        (ro ? '' : '<div class="nota-additem"><input class="it-new" data-nota="' + esc(n.id) + '" placeholder="+ elemento"></div>');
+      body = '<ul class="nota-items">' + items + '</ul>';
+      additem = ro ? '' : '<div class="nota-additem"><input class="it-new" data-nota="' + esc(n.id) + '" placeholder="+ elemento"></div>';
     } else {
       var linksHTML = notaLinksHTML(n.cuerpo);
       var soloLinks = linksHTML && !String(n.cuerpo || "").replace(/https?:\/\/[^\s]+/g, "").trim();
@@ -2967,19 +2991,47 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
         body = '<textarea class="nota-body" placeholder="Nota…  ·  para un link con texto: de qué trata | https://liga"' + (ro ? ' readonly' : '') + '>' + esc(n.cuerpo) + '</textarea>' + linksHTML;
       }
     }
+    var more = '<button class="nota-more" type="button" hidden></button>';
+    var rz = ro ? '' : '<div class="nota-rz" title="Arrastra para ajustar el alto" aria-label="Ajustar alto"><span></span></div>';
     var palette = ro ? '' : '<div class="nota-palette" hidden>' +
       ["default", "rojo", "naranja", "amarillo", "verde", "azul", "morado", "rosa", "gris"].map(function (c) {
         return '<button type="button" data-color="' + c + '" aria-pressed="' + (n.color === c) + '" style="background:' + colorSwatch(c) + '" aria-label="' + c + '"></button>';
       }).join("") + '</div>';
-    return '<article class="nota" data-nota="' + esc(n.id) + '" data-color="' + esc(n.color || "default") + '">' + head + mig + body + palette + '</article>';
+    return '<article class="nota" data-nota="' + esc(n.id) + '" data-color="' + esc(n.color || "default") + '">' +
+      head + mig + '<div class="nota-content">' + body + '</div>' + more + additem + palette + rz + '</article>';
   }
+  var NOTA_MAX = 300; // alto (px) antes de colapsar una nota alta
+  function notasAltoGet() { try { return JSON.parse(localStorage.getItem("irvin.notasAlto") || "{}") || {}; } catch (e) { return {}; } }
+  function notasAltoSet(m) { try { localStorage.setItem("irvin.notasAlto", JSON.stringify(m)); } catch (e) {} }
+  function notaAltoPut(id, v) { var m = notasAltoGet(); if (v == null) delete m[id]; else m[id] = v; notasAltoSet(m); }
+  function ajustarNota(art) {
+    var content = art.querySelector(".nota-content"); if (!content) return;
+    var alto = notasAltoGet()[art.dataset.nota]; // undefined = auto · -1 = expandida · número = px
+    content.style.maxHeight = "none";
+    var natural = content.scrollHeight;
+    var more = art.querySelector(".nota-more");
+    var clamp = (alto === -1) ? null : (typeof alto === "number" && alto > 0 ? Math.min(alto, natural) : (natural > NOTA_MAX ? NOTA_MAX : null));
+    if (clamp && clamp < natural - 4) {
+      content.style.maxHeight = clamp + "px"; art.classList.add("clamped");
+      if (more) { more.hidden = false; more.textContent = "⌄ Ver todo"; more.dataset.act = "expandir"; }
+    } else {
+      content.style.maxHeight = "none"; art.classList.remove("clamped");
+      if (more) {
+        if (alto === -1 && natural > NOTA_MAX) { more.hidden = false; more.textContent = "⌃ Reducir"; more.dataset.act = "reducir"; }
+        else more.hidden = true;
+      }
+    }
+  }
+  function ajustarNotas() { var g = $("notasGrid"); if (!g) return; [].slice.call(g.querySelectorAll(".nota")).forEach(ajustarNota); }
   function renderNotas() {
     var grid = $("notasGrid"); if (!grid) return;
     var notas = (state.notas || []).slice().sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
     $("notasVacio").hidden = notas.length > 0;
     grid.innerHTML = notas.map(notaHTML).join("");
+    ajustarNotas();
     if (notasFocus) { var inp = grid.querySelector('.it-new[data-nota="' + notasFocus + '"]'); notasFocus = null; if (inp) inp.focus(); }
   }
+  var _notasRz; window.addEventListener("resize", function () { if (state.view !== "notas") return; clearTimeout(_notasRz); _notasRz = setTimeout(ajustarNotas, 200); });
   function notaSaveField(id, field, val) {
     var n = byNota(id); if (!n || n[field] === val) return;
     var patch = {}; patch[field] = val; run(api.notaSave(notaFull(id, patch)), "");
@@ -2990,6 +3042,8 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
     var grid = $("notasGrid"); if (!grid) return;
     grid.addEventListener("click", function (ev) {
       var art = ev.target.closest(".nota"); if (!art) return; var id = art.dataset.nota;
+      var more = ev.target.closest(".nota-more");
+      if (more) { notaAltoPut(id, more.dataset.act === "expandir" ? -1 : NOTA_MAX); ajustarNota(art); return; }
       if (ev.target.closest(".nota-color")) { var pal = art.querySelector(".nota-palette"); if (pal) pal.hidden = !pal.hidden; return; }
       var sw = ev.target.closest(".nota-palette button");
       if (sw) { if (!requireEditor()) return; run(api.notaSave(notaFull(id, { color: sw.dataset.color })), ""); return; }
@@ -3048,6 +3102,66 @@ body[data-role="reader"] .nota-tools, body[data-role="reader"] .nota-additem, bo
     });
     grid.addEventListener("pointerup", finDrag);
     grid.addEventListener("pointercancel", finDrag);
+
+    // Ajustar el alto de una nota arrastrando la barra inferior (dedo / mouse)
+    var rzEl = null, rzPid = null, rzStartY = 0, rzStartH = 0, rzNatural = 0;
+    grid.addEventListener("pointerdown", function (ev) {
+      var h = ev.target.closest(".nota-rz"); if (!h) return;
+      if (state.role !== "editor") { requireEditor(); return; }
+      var art = h.closest(".nota"), content = art && art.querySelector(".nota-content"); if (!content) return;
+      ev.preventDefault();
+      rzStartH = content.getBoundingClientRect().height;
+      content.style.maxHeight = "none"; rzNatural = content.scrollHeight; content.style.maxHeight = rzStartH + "px";
+      rzEl = art; rzPid = ev.pointerId; rzStartY = ev.clientY;
+      art.classList.add("resizing", "clamped");
+      try { h.setPointerCapture(ev.pointerId); } catch (_) {}
+    });
+    grid.addEventListener("pointermove", function (ev) {
+      if (!rzEl || ev.pointerId !== rzPid) return;
+      var content = rzEl.querySelector(".nota-content");
+      var hh = Math.max(64, Math.min(rzNatural + 60, rzStartH + (ev.clientY - rzStartY)));
+      content.style.maxHeight = hh + "px";
+    });
+    function finRz() {
+      if (!rzEl) return; var art = rzEl; rzEl = null;
+      art.classList.remove("resizing");
+      var content = art.querySelector(".nota-content");
+      var set = parseInt(content.style.maxHeight, 10) || NOTA_MAX;
+      notaAltoPut(art.dataset.nota, set >= rzNatural - 4 ? -1 : set);
+      ajustarNota(art);
+    }
+    grid.addEventListener("pointerup", finRz);
+    grid.addEventListener("pointercancel", finRz);
+
+    // Reordenar los ítems de un checklist arrastrando su asa
+    var itEl = null, itPid = null, itMoved = false, itUl = null;
+    function finItem() {
+      if (!itEl) return; var li = itEl; itEl = null;
+      li.classList.remove("dragging"); li.style.pointerEvents = "";
+      if (itMoved && itUl) { var ids = [].slice.call(itUl.querySelectorAll(".nota-item")).map(function (x) { return x.dataset.item; }); run(api.notaItemOrden(ids), ""); }
+      itUl = null;
+    }
+    grid.addEventListener("pointerdown", function (ev) {
+      var h = ev.target.closest(".it-drag"); if (!h) return;
+      if (state.role !== "editor") { requireEditor(); return; }
+      var li = h.closest(".nota-item"); if (!li) return;
+      ev.preventDefault();
+      itEl = li; itUl = li.parentNode; itPid = ev.pointerId; itMoved = false;
+      li.classList.add("dragging"); li.style.pointerEvents = "none";
+      try { h.setPointerCapture(ev.pointerId); } catch (_) {}
+    });
+    grid.addEventListener("pointermove", function (ev) {
+      if (!itEl || ev.pointerId !== itPid) return;
+      itMoved = true;
+      var el = document.elementFromPoint(ev.clientX, ev.clientY);
+      var over = el && el.closest ? el.closest(".nota-item") : null;
+      if (over && over !== itEl && over.parentNode === itUl) {
+        var r = over.getBoundingClientRect();
+        itUl.insertBefore(itEl, (ev.clientY - r.top) > r.height / 2 ? over.nextElementSibling : over);
+      }
+    });
+    grid.addEventListener("pointerup", finItem);
+    grid.addEventListener("pointercancel", finItem);
   })();
 
   $("btnNew").addEventListener("click", function () { if (!requireEditor()) return; openForm(null); });
