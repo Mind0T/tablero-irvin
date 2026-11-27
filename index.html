@@ -780,7 +780,6 @@ body[data-role="reader"] .nota-rz, body[data-role="reader"] .it-drag { display: 
       <div class="pomo-dots" id="pomoDots" aria-hidden="true"></div>
       <div class="pomo-list" id="pomoList"></div>
       <button class="pomo-soundbtn" id="pomoSoundBtn" type="button" aria-pressed="true">🔊 Sonido</button>
-      <p class="pomo-note">Los pomodoros corren según el reloj, anclados a la hora de inicio de cada actividad: 25 min de enfoque · 5 de descanso. Entres cuando entres, el ciclo ya va corriendo con la hora real.</p>
     </div>
   </section>
 
@@ -789,7 +788,6 @@ body[data-role="reader"] .nota-rz, body[data-role="reader"] .it-drag { display: 
     <div class="notas-bar">
       <button class="btn" id="btnNotaTexto" type="button">+ Texto</button>
       <button class="btn" id="btnNotaCheck" type="button">+ Checklist</button>
-      <span class="notas-hint">Tus notas tipo Keep. No aparecen en el calendario, el tablero ni el pomodoro.</span>
     </div>
     <div id="notasGrid" class="notas-grid"></div>
     <p id="notasVacio" class="notas-vacio" hidden>Aún no tienes notas. Crea una con “+ Texto” o “+ Checklist”.</p>
@@ -856,7 +854,6 @@ body[data-role="reader"] .nota-rz, body[data-role="reader"] .it-drag { display: 
 <dialog id="dlgRecursos">
   <form method="dialog">
     <h2 id="resTitle">Recursos</h2>
-    <p style="margin:0;font-size:13px;color:var(--text-muted);">Links que usas seguido. Se editan en la pestaña <b>Recursos</b> de la hoja y se precargan en cada asignación nueva de la misma categoría.</p>
     <div id="resList" style="display:grid;gap:10px;"></div>
     <div class="dlg-actions"><div class="right"><button class="btn ghost" type="submit">Cerrar</button></div></div>
   </form>
@@ -925,7 +922,6 @@ body[data-role="reader"] .nota-rz, body[data-role="reader"] .it-drag { display: 
     <details class="mats" id="matsBox">
       <summary><span class="mats-title">Agregar recursos</span><span class="mats-count" id="matsCount"></span></summary>
       <div class="mats-body">
-        <p class="mats-hint">PDFs, repos, cursos, carpetas de Drive. Lo que cargues aquí aparece arriba, en «Recursos de la asignación».</p>
         <div id="matList" class="matlist"></div>
         <button class="btn ghost sm" id="btnAddMat" type="button">+ Agregar recurso</button>
       </div>
@@ -2988,7 +2984,7 @@ body[data-role="reader"] .nota-rz, body[data-role="reader"] .it-drag { display: 
       if (ro && soloLinks) {
         body = linksHTML; // nota de solo-enlaces en modo lector: muestra solo los chips clicables
       } else {
-        body = '<textarea class="nota-body" placeholder="Nota…  ·  para un link con texto: de qué trata | https://liga"' + (ro ? ' readonly' : '') + '>' + esc(n.cuerpo) + '</textarea>' + linksHTML;
+        body = '<textarea class="nota-body" placeholder="Nota…"' + (ro ? ' readonly' : '') + '>' + esc(n.cuerpo) + '</textarea>' + linksHTML;
       }
     }
     var more = '<button class="nota-more" type="button" hidden></button>';
